@@ -9,7 +9,7 @@ export default function Home() {
     const fetchMessage = async () => {
       const response = await fetch("/api/endpoints");
       const data = await response.json();
-      setMessage(data.message);
+      setMessage(data.tests[0].name);
     };
 
     fetchMessage();
@@ -17,7 +17,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center justify-center h-screen">
-      <h1 className="text-4xl font-bold bg-red-500">{message}</h1>
+      <h1 className="text-4xl font-bold bg-pink-700">{message}</h1>
     </div>
   );
 }
