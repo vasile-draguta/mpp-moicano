@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 export default function Home() {
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     const fetchMessage = async () => {
-      const response = await fetch("/api/endpoints");
+      const response = await fetch('/api/endpoints');
       const data = await response.json();
       setMessage(data.tests[0].name);
     };
