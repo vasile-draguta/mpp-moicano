@@ -29,7 +29,7 @@ export default function SidebarMenu() {
               <Link
                 href={item.href}
                 className={`flex items-center p-3 rounded-lg ${
-                  isActive ? 'bg-purple-300/25' : ''
+                  isActive ? 'bg-purple-300/10' : ''
                 }`}
               >
                 <div className="flex justify-center w-10">

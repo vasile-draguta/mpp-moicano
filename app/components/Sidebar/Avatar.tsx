@@ -22,7 +22,7 @@ export default function Avatar({
         width={150}
         height={150}
       />
-      <p className="text-2xl font-medium">{username}</p>
+      <p className="text-2xl font-medium text-gray-300">{username}</p>
     </div>
   );
 }

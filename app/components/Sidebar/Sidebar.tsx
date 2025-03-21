@@ -13,8 +13,6 @@ export default function Sidebar() {
       <div className="flex-1 flex flex-col">
         <SidebarMenu />
       </div>
-
-      <div className="p-4">{/* Footer space if needed */}</div>
     </div>
   );
 }
