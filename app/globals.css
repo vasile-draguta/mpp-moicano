@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700;800;900&family=Oswald:wght@200;300;400;500;600;700&family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -7,7 +8,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #1E1E1E;
     --foreground: #ededed;
   }
 }
@@ -15,5 +16,5 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: var(--font-sans);
+  font-family: 'Montserrat', sans-serif;
 }
