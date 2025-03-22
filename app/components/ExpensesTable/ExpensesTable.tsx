@@ -1,21 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-
 import { expenses } from '@/app/utils/mockData';
+import { PaginationProvider } from '@/app/context/PaginationContext';
+import Pagination from '../Pagination/Pagination';
+import { usePagination } from '@/app/context/PaginationContext';
 
-export default function ExpensesTable() {
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+const ExpensesTableContent = () => {
+  const { currentPage, itemsPerPage } = usePagination();
 
-  const totalPages = Math.ceil(expenses.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = expenses.slice(indexOfFirstItem, indexOfLastItem);
-
-  const handlePageChange = (pageNumber: number): void => {
-    setCurrentPage(pageNumber);
-  };
 
   const formatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -23,7 +18,7 @@ export default function ExpensesTable() {
   });
 
   return (
-    <div className="w-full">
+    <>
       <div className="overflow-x-auto mb-4">
         <table className="w-full border-collapse">
           <thead className="bg-transparent">
@@ -70,57 +65,21 @@ export default function ExpensesTable() {
         </table>
       </div>
 
-      <div className="flex justify-between items-center mt-20 text-gray-300">
-        <div>
-          Showing {indexOfFirstItem + 1} to{' '}
-          {Math.min(indexOfLastItem, expenses.length)} of {expenses.length}{' '}
-          entries
-        </div>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            title="Previous"
-            className={`px-3 py-2 rounded ${
-              currentPage === 1
-                ? 'bg-purple-300/10 text-gray-500 cursor-not-allowed'
-                : 'bg-purple-300/10 text-purple-300 hover:bg-purple-300/20 cursor-pointer'
-            }`}
-          >
-            Previous
-          </button>
+      <Pagination />
+    </>
+  );
+};
 
-          <div className="flex space-x-1">
-            {Array.from({ length: totalPages }, (_, i) => (
-              <button
-                key={i + 1}
-                onClick={() => handlePageChange(i + 1)}
-                title={`Go to page ${i + 1}`}
-                className={`px-3 py-2 rounded w-10 h-10 ${
-                  currentPage === i + 1
-                    ? 'bg-purple-300 text-black'
-                    : 'bg-[#1E1E1E] text-gray-300 hover:bg-purple-300/20 cursor-pointer'
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-          </div>
-
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            title="Next"
-            className={`px-3 py-2 rounded ${
-              currentPage === totalPages
-                ? 'bg-purple-300/10 text-gray-500 cursor-not-allowed'
-                : 'bg-purple-300/10 text-purple-300 hover:bg-purple-300/20 cursor-pointer'
-            }`}
-          >
-            Next
-          </button>
-        </div>
-      </div>
+export default function ExpensesTable() {
+  return (
+    <div className="w-full">
+      <PaginationProvider
+        totalItems={expenses.length}
+        itemsPerPage={10}
+        initialPage={1}
+      >
+        <ExpensesTableContent />
+      </PaginationProvider>
     </div>
   );
 }
