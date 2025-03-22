@@ -5,12 +5,12 @@ import Pagination from '../Pagination/Pagination';
 import { usePagination } from '@/app/context/PaginationContext';
 import { useEffect, useState } from 'react';
 import {
-  Expense,
   getAllExpenses,
   getPaginatedExpenses,
 } from '@/app/services/expenseService';
 import DeleteExpenseButton from '../Buttons/DeleteExpenseButton';
 import EditExpenseButton from '../Buttons/EditExpenseButton';
+import { Expense } from '@/app/types/Expense';
 
 const ExpensesTableContent = () => {
   const { currentPage, itemsPerPage } = usePagination();
@@ -65,18 +65,18 @@ const ExpensesTableContent = () => {
                 key={expense.id}
                 className={`${
                   index % 2 === 0 ? 'bg-[#1E1E1E]' : 'bg-[#878585]/50'
-                } transition-colors hover:bg-purple-300/50`}
+                } transition-colors hover:bg-purple-300/20  `}
               >
-                <td className="px-6 py-5 text-gray-300">{expense.date}</td>
-                <td className="px-6 py-5 text-gray-300">{expense.merchant}</td>
-                <td className="px-6 py-5 text-gray-300">
+                <td className="px-5 py-4 text-gray-300">{expense.date}</td>
+                <td className="px-5 py-4 text-gray-300">{expense.merchant}</td>
+                <td className="px-5 py-4 text-gray-300">
                   {expense.description}
                 </td>
-                <td className="px-6 py-5 text-gray-300">
+                <td className="px-5 py-4 text-gray-300">
                   {formatter.format(expense.amount)}
                 </td>
-                <td className="px-6 py-5 text-gray-300">{expense.category}</td>
-                <td className="px-6 py-5 text-right">
+                <td className="px-5 py-4 text-gray-300">{expense.category}</td>
+                <td className="px-5 py-4 text-right">
                   <div className="flex items-center justify-end space-x-2">
                     <EditExpenseButton expenseId={expense.id} />
                     <DeleteExpenseButton

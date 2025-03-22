@@ -1,25 +1,14 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-
-type PaginationContextType = {
-  currentPage: number;
-  totalPages: number;
-  itemsPerPage: number;
-  totalItems: number;
-  handlePageChange: (pageNumber: number) => void;
-};
+import React, { createContext, useContext, useState } from 'react';
+import {
+  PaginationContextType,
+  PaginationProviderProps,
+} from '@/app/types/Pagination';
 
 const PaginationContext = createContext<PaginationContextType | undefined>(
   undefined,
 );
-
-interface PaginationProviderProps {
-  children: ReactNode;
-  totalItems: number;
-  itemsPerPage?: number;
-  initialPage?: number;
-}
 
 export function PaginationProvider({
   children,

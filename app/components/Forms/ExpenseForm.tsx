@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
-import { addExpense } from '@/app/services/expenseService';
+import { addExpense, updateExpense } from '@/app/services/expenseService';
+import { Expense } from '@/app/types/Expense';
 
 // Define form schema for validation
 const expenseSchema = z.object({
@@ -44,9 +45,26 @@ const categories = [
   'Other',
 ];
 
-export default function ExpenseForm() {
+interface ExpenseFormProps {
+  expenseToEdit?: Expense | null;
+}
+
+export default function ExpenseForm({ expenseToEdit }: ExpenseFormProps) {
   const router = useRouter();
-  const [formData, setFormData] = useState<ExpenseFormData>(defaultFormData);
+  const isEditing = !!expenseToEdit;
+
+  // Initialize form data based on whether we're editing or creating
+  const initialFormData: ExpenseFormData = isEditing
+    ? {
+        date: expenseToEdit.date,
+        merchant: expenseToEdit.merchant,
+        description: expenseToEdit.description,
+        amount: expenseToEdit.amount.toString(),
+        category: expenseToEdit.category,
+      }
+    : defaultFormData;
+
+  const [formData, setFormData] = useState<ExpenseFormData>(initialFormData);
   const [errors, setErrors] = useState<
     Partial<Record<keyof ExpenseFormData, string>>
   >({});
@@ -108,9 +126,15 @@ export default function ExpenseForm() {
         category: formData.category,
       };
 
-      // Add the expense using our service
-      const newExpense = addExpense(expenseData);
-      console.log('New expense added:', newExpense);
+      if (isEditing && expenseToEdit) {
+        // Update existing expense
+        const updatedExpense = updateExpense(expenseToEdit.id, expenseData);
+        console.log('Expense updated:', updatedExpense);
+      } else {
+        // Add new expense
+        const newExpense = addExpense(expenseData);
+        console.log('New expense added:', newExpense);
+      }
 
       // Redirect back to expenses page after saving
       router.push('/expenses');
@@ -273,7 +297,11 @@ export default function ExpenseForm() {
           disabled={isSubmitting}
           className="px-4 py-2 bg-purple-300/10 text-purple-300 rounded-md hover:bg-purple-300/20 focus:outline-none focus:ring-2 focus:ring-purple-300/50 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? 'Saving...' : 'Save Expense'}
+          {isSubmitting
+            ? 'Saving...'
+            : isEditing
+              ? 'Update Expense'
+              : 'Save Expense'}
         </button>
       </div>
     </form>

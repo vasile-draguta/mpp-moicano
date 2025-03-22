@@ -1,16 +1,7 @@
 'use client';
 
 import { expenses as mockExpenses } from '../utils/mockData';
-
-// Define the Expense type
-export interface Expense {
-  id: number;
-  date: string;
-  description: string;
-  amount: number;
-  category: string;
-  merchant: string;
-}
+import { Expense } from '@/app/types/Expense';
 
 // Create a copy of the expenses that we can modify
 let expenses: Expense[] = [...mockExpenses];
@@ -71,4 +62,10 @@ export const deleteExpense = (id: number): boolean => {
   const initialLength = expenses.length;
   expenses = expenses.filter((e) => e.id !== id);
   return expenses.length < initialLength;
+};
+
+// Get an expense by ID
+export const getExpenseById = (id: number): Expense | null => {
+  const expense = expenses.find((e) => e.id === id);
+  return expense || null;
 };
