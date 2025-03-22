@@ -11,7 +11,7 @@ export default function Pagination() {
   const { pageInfoText } = usePaginationCalculations();
 
   return (
-    <div className="flex justify-between items-center mt-20 text-gray-300">
+    <div className="flex justify-between items-center mt-10 text-gray-300">
       <div>{pageInfoText}</div>
       <div className="flex space-x-2">
         <PreviousButton />
