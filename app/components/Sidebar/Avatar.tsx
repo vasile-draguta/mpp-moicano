@@ -1,12 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-
-interface AvatarProps {
-  src: string;
-  alt?: string;
-  username?: string;
-}
+import { AvatarProps } from '@/app/types/Component';
 
 export default function Avatar({
   src,

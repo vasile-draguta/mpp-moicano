@@ -1,14 +1,9 @@
 'use client';
 
 import { getAllExpenses, searchExpenses } from '@/app/services/expenseService';
-import { Expense } from '@/app/types/Expense';
-import { useState, useEffect, useRef, RefObject } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useDebounce } from '@/app/hooks/useDebounce';
-
-interface SearchFieldProps {
-  onSearchResults: (results: Expense[]) => void;
-  inputRef?: RefObject<HTMLInputElement | null>;
-}
+import { SearchFieldProps } from '@/app/types/Button';
 
 export default function SearchField({
   onSearchResults,

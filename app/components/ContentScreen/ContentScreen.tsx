@@ -1,8 +1,6 @@
 'use client';
 
-interface ContentScreenProps {
-  children?: React.ReactNode;
-}
+import { ContentScreenProps } from '@/app/types/Component';
 
 export default function ContentScreen({ children }: ContentScreenProps) {
   return (

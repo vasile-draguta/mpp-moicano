@@ -4,19 +4,27 @@ import { PaginationProvider } from '@/app/context/PaginationContext';
 import Pagination from '../Pagination/Pagination';
 import { usePagination } from '@/app/context/PaginationContext';
 import { useEffect, useState, useCallback } from 'react';
-import { getAllExpenses } from '@/app/services/expenseService';
+import {
+  getAllExpenses,
+  sortExpensesByDate,
+  sortExpensesByAmount,
+} from '@/app/services/expenseService';
 import DeleteExpenseButton from '../Buttons/DeleteExpenseButton';
 import EditExpenseButton from '../Buttons/EditExpenseButton';
 import { Expense } from '@/app/types/Expense';
-
-interface ExpensesTableContentProps {
-  expenses: Expense[];
-  onRefresh: () => void;
-}
+import { ArrowDown, ArrowUp } from 'lucide-react';
+import {
+  SortOptions,
+  ExpensesTableProps,
+  ExpensesTableContentProps,
+} from '@/app/types/Table';
 
 const ExpensesTableContent = ({
   expenses,
   onRefresh,
+  onSort,
+  sortField,
+  sortOrder,
 }: ExpensesTableContentProps) => {
   const { currentPage, itemsPerPage } = usePagination();
   const [currentItems, setCurrentItems] = useState<Expense[]>([]);
@@ -37,14 +45,40 @@ const ExpensesTableContent = ({
     currency: 'USD',
   });
 
+  // Handle sorting when a column header is clicked
+  const handleSortClick = (field: SortOptions['field']) => {
+    if (field === sortField) {
+      // Toggle order if same field
+      onSort(field, sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Default to descending for date, ascending for amount
+      const defaultOrder = field === 'date' ? 'desc' : 'asc';
+      onSort(field, defaultOrder);
+    }
+  };
+
+  // Render sort indicator
+  const renderSortIndicator = (field: SortOptions['field']) => {
+    if (sortField !== field) return null;
+
+    return sortOrder === 'asc' ? (
+      <ArrowUp className="inline ml-1" size={16} />
+    ) : (
+      <ArrowDown className="inline ml-1" size={16} />
+    );
+  };
+
   return (
     <>
       <div className="overflow-x-auto mb-4">
         <table className="w-full border-collapse">
           <thead className="bg-transparent">
             <tr>
-              <th className="px-6 py-4 text-left text-lg text-gray-400 font-bold">
-                Date
+              <th
+                className="px-6 py-4 text-left text-lg text-gray-400 font-bold cursor-pointer hover:text-purple-300"
+                onClick={() => handleSortClick('date')}
+              >
+                Date {renderSortIndicator('date')}
               </th>
               <th className="px-6 py-4 text-left text-lg text-gray-400 font-bold">
                 Merchant
@@ -52,8 +86,11 @@ const ExpensesTableContent = ({
               <th className="px-6 py-4 text-left text-lg text-gray-400 font-bold">
                 Description
               </th>
-              <th className="px-6 py-4 text-left text-lg text-gray-400 font-bold">
-                Amount
+              <th
+                className="px-6 py-4 text-left text-lg text-gray-400 font-bold cursor-pointer hover:text-purple-300"
+                onClick={() => handleSortClick('amount')}
+              >
+                Amount {renderSortIndicator('amount')}
               </th>
               <th className="px-6 py-4 text-left text-lg text-gray-400 font-bold">
                 Category
@@ -113,28 +150,54 @@ const ExpensesTableContent = ({
   );
 };
 
-interface ExpensesTableProps {
-  searchResults: Expense[] | null;
-}
-
 export default function ExpensesTable({ searchResults }: ExpensesTableProps) {
   const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [sortField, setSortField] = useState<SortOptions['field']>(null);
+  const [sortOrder, setSortOrder] = useState<SortOptions['order']>('desc');
 
+  // Fetch and sort expenses
   useEffect(() => {
+    let expenses: Expense[];
+
     if (searchResults) {
       // Use search results if provided
-      setFilteredExpenses(searchResults);
+      expenses = [...searchResults];
     } else {
       // Otherwise use all expenses
-      const expenses = getAllExpenses();
-      setFilteredExpenses(expenses);
+      expenses = getAllExpenses();
     }
-  }, [searchResults, refreshTrigger]);
+
+    // Apply sorting if a sort field is selected
+    if (sortField === 'date') {
+      expenses = sortExpensesByDate(expenses);
+      // Reverse if ascending order is selected
+      if (sortOrder === 'asc') {
+        expenses = expenses.reverse();
+      }
+    } else if (sortField === 'amount') {
+      expenses = sortExpensesByAmount(expenses);
+      // Reverse if descending order is selected
+      if (sortOrder === 'desc') {
+        expenses = expenses.reverse();
+      }
+    }
+
+    setFilteredExpenses(expenses);
+  }, [searchResults, refreshTrigger, sortField, sortOrder]);
 
   const handleRefresh = useCallback(() => {
     setRefreshTrigger((prev) => prev + 1);
   }, []);
+
+  // Handle sorting
+  const handleSort = useCallback(
+    (field: SortOptions['field'], order: SortOptions['order']) => {
+      setSortField(field);
+      setSortOrder(order);
+    },
+    [],
+  );
 
   // Refresh when a new expense is added
   useEffect(() => {
@@ -160,6 +223,9 @@ export default function ExpensesTable({ searchResults }: ExpensesTableProps) {
         <ExpensesTableContent
           expenses={filteredExpenses}
           onRefresh={handleRefresh}
+          onSort={handleSort}
+          sortField={sortField}
+          sortOrder={sortOrder}
         />
       </PaginationProvider>
     </div>

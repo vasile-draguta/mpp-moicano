@@ -3,12 +3,8 @@
 import { Search } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import SearchField from './SearchField';
-import { Expense } from '@/app/types/Expense';
 import { getAllExpenses } from '@/app/services/expenseService';
-
-interface SearchButtonProps {
-  onSearchResults: (results: Expense[]) => void;
-}
+import { SearchButtonProps } from '@/app/types/Button';
 
 export default function SearchButton({ onSearchResults }: SearchButtonProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);

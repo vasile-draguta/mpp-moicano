@@ -2,10 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { SquarePen } from 'lucide-react';
-
-interface EditExpenseButtonProps {
-  expenseId: number;
-}
+import { EditExpenseButtonProps } from '@/app/types/Button';
 
 export default function EditExpenseButton({
   expenseId,

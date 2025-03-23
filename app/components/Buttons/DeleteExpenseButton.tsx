@@ -3,11 +3,7 @@
 import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { deleteExpense } from '@/app/services/expenseService';
-
-interface DeleteExpenseButtonProps {
-  expenseId: number;
-  onDelete?: () => void;
-}
+import { DeleteExpenseButtonProps } from '@/app/types/Button';
 
 export default function DeleteExpenseButton({
   expenseId,
