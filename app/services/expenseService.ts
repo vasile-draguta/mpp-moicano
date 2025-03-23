@@ -82,11 +82,11 @@ export const searchExpenses = (query: string): Expense[] => {
 };
 
 export const sortExpensesByDate = (expenses: Expense[]): Expense[] => {
-  return expenses.sort((a, b) => {
+  return [...expenses].sort((a, b) => {
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 };
 
 export const sortExpensesByAmount = (expenses: Expense[]): Expense[] => {
-  return expenses.sort((a, b) => a.amount - b.amount);
+  return [...expenses].sort((a, b) => a.amount - b.amount);
 };
