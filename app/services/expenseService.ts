@@ -90,3 +90,33 @@ export const sortExpensesByDate = (expenses: Expense[]): Expense[] => {
 export const sortExpensesByAmount = (expenses: Expense[]): Expense[] => {
   return [...expenses].sort((a, b) => a.amount - b.amount);
 };
+
+// Get the category with the highest total spending
+export const getHighestSpendingCategory = (
+  expensesToAnalyze: Expense[] = expenses,
+): string | null => {
+  if (expensesToAnalyze.length === 0) return null;
+
+  // Calculate total spending per category
+  const categoryTotals = expensesToAnalyze.reduce<Record<string, number>>(
+    (totals, expense) => {
+      const { category, amount } = expense;
+      totals[category] = (totals[category] || 0) + amount;
+      return totals;
+    },
+    {},
+  );
+
+  // Find the category with the highest total
+  let highestCategory: string | null = null;
+  let highestAmount = 0;
+
+  Object.entries(categoryTotals).forEach(([category, total]) => {
+    if (total > highestAmount) {
+      highestAmount = total;
+      highestCategory = category;
+    }
+  });
+
+  return highestCategory;
+};

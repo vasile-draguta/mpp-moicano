@@ -8,6 +8,7 @@ import {
   getAllExpenses,
   sortExpensesByDate,
   sortExpensesByAmount,
+  getHighestSpendingCategory,
 } from '@/app/services/expenseService';
 import DeleteExpenseButton from '../Buttons/DeleteExpenseButton';
 import EditExpenseButton from '../Buttons/EditExpenseButton';
@@ -28,6 +29,9 @@ const ExpensesTableContent = ({
 }: ExpensesTableContentProps) => {
   const { currentPage, itemsPerPage } = usePagination();
   const [currentItems, setCurrentItems] = useState<Expense[]>([]);
+  const [highestSpendingCategory, setHighestSpendingCategory] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     // Calculate pagination on the provided expenses (which may be filtered)
@@ -35,6 +39,12 @@ const ExpensesTableContent = ({
     const endIndex = startIndex + itemsPerPage;
     setCurrentItems(expenses.slice(startIndex, endIndex));
   }, [currentPage, itemsPerPage, expenses]);
+
+  // Calculate highest spending category whenever expenses change
+  useEffect(() => {
+    const category = getHighestSpendingCategory(expenses);
+    setHighestSpendingCategory(category);
+  }, [expenses]);
 
   const handleExpenseDeleted = () => {
     onRefresh();
@@ -120,7 +130,9 @@ const ExpensesTableContent = ({
                   <td className="px-5 py-4 text-gray-300">
                     {formatter.format(expense.amount)}
                   </td>
-                  <td className="px-5 py-4 text-gray-300">
+                  <td
+                    className={`px-5 py-4 ${expense.category === highestSpendingCategory ? 'text-[#BF415D] font-bold' : 'text-gray-300'}`}
+                  >
                     {expense.category}
                   </td>
                   <td className="px-5 py-4 text-right">
