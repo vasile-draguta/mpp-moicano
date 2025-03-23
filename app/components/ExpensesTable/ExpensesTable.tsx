@@ -3,28 +3,33 @@
 import { PaginationProvider } from '@/app/context/PaginationContext';
 import Pagination from '../Pagination/Pagination';
 import { usePagination } from '@/app/context/PaginationContext';
-import { useEffect, useState } from 'react';
-import {
-  getAllExpenses,
-  getPaginatedExpenses,
-} from '@/app/services/expenseService';
+import { useEffect, useState, useCallback } from 'react';
+import { getAllExpenses } from '@/app/services/expenseService';
 import DeleteExpenseButton from '../Buttons/DeleteExpenseButton';
 import EditExpenseButton from '../Buttons/EditExpenseButton';
 import { Expense } from '@/app/types/Expense';
 
-const ExpensesTableContent = () => {
+interface ExpensesTableContentProps {
+  expenses: Expense[];
+  onRefresh: () => void;
+}
+
+const ExpensesTableContent = ({
+  expenses,
+  onRefresh,
+}: ExpensesTableContentProps) => {
   const { currentPage, itemsPerPage } = usePagination();
   const [currentItems, setCurrentItems] = useState<Expense[]>([]);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
-    const { data } = getPaginatedExpenses(currentPage, itemsPerPage);
-    setCurrentItems(data);
-  }, [currentPage, itemsPerPage, refreshTrigger]);
+    // Calculate pagination on the provided expenses (which may be filtered)
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    setCurrentItems(expenses.slice(startIndex, endIndex));
+  }, [currentPage, itemsPerPage, expenses]);
 
   const handleExpenseDeleted = () => {
-    // Trigger a refresh of the data
-    setRefreshTrigger((prev) => prev + 1);
+    onRefresh();
   };
 
   const formatter = new Intl.NumberFormat('en-US', {
@@ -60,33 +65,45 @@ const ExpensesTableContent = () => {
           </thead>
 
           <tbody>
-            {currentItems.map((expense, index) => (
-              <tr
-                key={expense.id}
-                className={`${
-                  index % 2 === 0 ? 'bg-[#1E1E1E]' : 'bg-[#878585]/50'
-                } transition-colors hover:bg-purple-300/20  `}
-              >
-                <td className="px-5 py-4 text-gray-300">{expense.date}</td>
-                <td className="px-5 py-4 text-gray-300">{expense.merchant}</td>
-                <td className="px-5 py-4 text-gray-300">
-                  {expense.description}
-                </td>
-                <td className="px-5 py-4 text-gray-300">
-                  {formatter.format(expense.amount)}
-                </td>
-                <td className="px-5 py-4 text-gray-300">{expense.category}</td>
-                <td className="px-5 py-4 text-right">
-                  <div className="flex items-center justify-end space-x-2">
-                    <EditExpenseButton expenseId={expense.id} />
-                    <DeleteExpenseButton
-                      expenseId={expense.id}
-                      onDelete={handleExpenseDeleted}
-                    />
-                  </div>
+            {currentItems.length > 0 ? (
+              currentItems.map((expense, index) => (
+                <tr
+                  key={expense.id}
+                  className={`${
+                    index % 2 === 0 ? 'bg-[#1E1E1E]' : 'bg-[#878585]/50'
+                  } transition-colors hover:bg-purple-300/20`}
+                >
+                  <td className="px-5 py-4 text-gray-300">{expense.date}</td>
+                  <td className="px-5 py-4 text-gray-300">
+                    {expense.merchant}
+                  </td>
+                  <td className="px-5 py-4 text-gray-300">
+                    {expense.description}
+                  </td>
+                  <td className="px-5 py-4 text-gray-300">
+                    {formatter.format(expense.amount)}
+                  </td>
+                  <td className="px-5 py-4 text-gray-300">
+                    {expense.category}
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <div className="flex items-center justify-end space-x-2">
+                      <EditExpenseButton expenseId={expense.id} />
+                      <DeleteExpenseButton
+                        expenseId={expense.id}
+                        onDelete={handleExpenseDeleted}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} className="px-5 py-4 text-center text-gray-300">
+                  No expenses found
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
@@ -96,37 +113,54 @@ const ExpensesTableContent = () => {
   );
 };
 
-export default function ExpensesTable() {
-  const [totalItems, setTotalItems] = useState(0);
+interface ExpensesTableProps {
+  searchResults: Expense[] | null;
+}
+
+export default function ExpensesTable({ searchResults }: ExpensesTableProps) {
+  const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
-    const expenses = getAllExpenses();
-    setTotalItems(expenses.length);
-  }, [refreshTrigger]);
+    if (searchResults) {
+      // Use search results if provided
+      setFilteredExpenses(searchResults);
+    } else {
+      // Otherwise use all expenses
+      const expenses = getAllExpenses();
+      setFilteredExpenses(expenses);
+    }
+  }, [searchResults, refreshTrigger]);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshTrigger((prev) => prev + 1);
+  }, []);
 
   // Refresh when a new expense is added
   useEffect(() => {
     // Set up event listener for when navigation occurs
     // (like when returning from the new expense page)
     const handleRouteChange = () => {
-      setRefreshTrigger((prev) => prev + 1);
+      handleRefresh();
     };
 
     window.addEventListener('focus', handleRouteChange);
     return () => {
       window.removeEventListener('focus', handleRouteChange);
     };
-  }, []);
+  }, [handleRefresh]);
 
   return (
     <div className="w-full">
       <PaginationProvider
-        totalItems={totalItems}
+        totalItems={filteredExpenses.length}
         itemsPerPage={10}
         initialPage={1}
       >
-        <ExpensesTableContent />
+        <ExpensesTableContent
+          expenses={filteredExpenses}
+          onRefresh={handleRefresh}
+        />
       </PaginationProvider>
     </div>
   );

@@ -69,3 +69,14 @@ export const getExpenseById = (id: number): Expense | null => {
   const expense = expenses.find((e) => e.id === id);
   return expense || null;
 };
+
+// Search for expenses by merchant, descripton, or category
+export const searchExpenses = (query: string): Expense[] => {
+  const lowerCaseQuery = query.toLowerCase();
+  return expenses.filter(
+    (e) =>
+      e.merchant.toLowerCase().includes(lowerCaseQuery) ||
+      e.description.toLowerCase().includes(lowerCaseQuery) ||
+      e.category.toLowerCase().includes(lowerCaseQuery),
+  );
+};
