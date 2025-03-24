@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "bun test --preload ./tests/setup.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",
@@ -28,6 +29,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "bun-types": "^1.2.5",
     "eslint": "^9",
     "eslint-config-next": "15.2.0",
     "tailwindcss": "^4.0.9",
