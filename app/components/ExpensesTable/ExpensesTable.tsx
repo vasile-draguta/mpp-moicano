@@ -9,6 +9,7 @@ import {
   sortExpensesByDate,
   sortExpensesByAmount,
   getHighestSpendingCategory,
+  getLowestSpendingCategory,
 } from '@/app/services/expenseService';
 import DeleteExpenseButton from '../Buttons/DeleteExpenseButton';
 import EditExpenseButton from '../Buttons/EditExpenseButton';
@@ -32,6 +33,9 @@ const ExpensesTableContent = ({
   const [highestSpendingCategory, setHighestSpendingCategory] = useState<
     string | null
   >(null);
+  const [lowestSpendingCategory, setLowestSpendingCategory] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     // Calculate pagination on the provided expenses (which may be filtered)
@@ -40,10 +44,13 @@ const ExpensesTableContent = ({
     setCurrentItems(expenses.slice(startIndex, endIndex));
   }, [currentPage, itemsPerPage, expenses]);
 
-  // Calculate highest spending category whenever expenses change
+  // Calculate highest and lowest spending categories whenever expenses change
   useEffect(() => {
-    const category = getHighestSpendingCategory(expenses);
-    setHighestSpendingCategory(category);
+    const highestCategory = getHighestSpendingCategory(expenses);
+    setHighestSpendingCategory(highestCategory);
+
+    const lowestCategory = getLowestSpendingCategory(expenses);
+    setLowestSpendingCategory(lowestCategory);
   }, [expenses]);
 
   const handleExpenseDeleted = () => {
@@ -131,7 +138,13 @@ const ExpensesTableContent = ({
                     {formatter.format(expense.amount)}
                   </td>
                   <td
-                    className={`px-5 py-4 ${expense.category === highestSpendingCategory ? 'text-[#BF415D] font-bold' : 'text-gray-300'}`}
+                    className={`px-5 py-4 ${
+                      expense.category === highestSpendingCategory
+                        ? 'text-[#BF415D] font-bold'
+                        : expense.category === lowestSpendingCategory
+                          ? 'text-purple-300 font-bold'
+                          : 'text-gray-300'
+                    }`}
                   >
                     {expense.category}
                   </td>

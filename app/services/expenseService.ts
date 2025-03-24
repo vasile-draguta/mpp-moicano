@@ -120,3 +120,33 @@ export const getHighestSpendingCategory = (
 
   return highestCategory;
 };
+
+// Get the category with the lowest total spending
+export const getLowestSpendingCategory = (
+  expensesToAnalyze: Expense[] = expenses,
+): string | null => {
+  if (expensesToAnalyze.length === 0) return null;
+
+  // Calculate total spending per category
+  const categoryTotals = expensesToAnalyze.reduce<Record<string, number>>(
+    (totals, expense) => {
+      const { category, amount } = expense;
+      totals[category] = (totals[category] || 0) + amount;
+      return totals;
+    },
+    {},
+  );
+
+  // Find the category with the lowest total
+  let lowestCategory: string | null = null;
+  let lowestAmount = Infinity;
+
+  Object.entries(categoryTotals).forEach(([category, total]) => {
+    if (total < lowestAmount) {
+      lowestAmount = total;
+      lowestCategory = category;
+    }
+  });
+
+  return lowestCategory;
+};
