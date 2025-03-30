@@ -40,6 +40,15 @@ const SpendingByMonthChart = () => {
 
   const options: ChartOptions<'bar'> = {
     responsive: true,
+    maintainAspectRatio: true,
+    layout: {
+      padding: {
+        left: 10,
+        right: 20,
+        top: 0,
+        bottom: 10,
+      },
+    },
     plugins: {
       legend: {
         display: false,
@@ -51,6 +60,10 @@ const SpendingByMonthChart = () => {
         font: {
           size: 16,
         },
+        padding: {
+          top: 10,
+          bottom: 15,
+        },
       },
     },
     scales: {
@@ -61,14 +74,24 @@ const SpendingByMonthChart = () => {
         },
         ticks: {
           color: '#D1D5DB', // Gray-300
+          font: {
+            size: 12,
+          },
+          maxTicksLimit: 6,
         },
       },
       x: {
         grid: {
           color: '#374151', // Gray-700
+          display: false,
         },
         ticks: {
           color: '#D1D5DB', // Gray-300
+          font: {
+            size: 12,
+          },
+          maxRotation: 45,
+          minRotation: 45,
         },
       },
     },
@@ -103,14 +126,27 @@ const SpendingByMonthChart = () => {
           {} as Record<string, number>,
         );
 
+      // Limit to last 12 months (showing more since we have even more space)
+      const limitedMonths: Record<string, number> = {};
+      const keys = Object.keys(sortedMonths);
+      const values = Object.values(sortedMonths);
+      const startIdx = Math.max(0, keys.length - 12);
+
+      for (let i = startIdx; i < keys.length; i++) {
+        limitedMonths[keys[i]] = values[i];
+      }
+
       setChartData({
-        labels: Object.keys(sortedMonths),
+        labels: Object.keys(limitedMonths),
         datasets: [
           {
             label: 'Total Spending',
-            data: Object.values(sortedMonths),
+            data: Object.values(limitedMonths),
             backgroundColor: '#BF415D',
             borderWidth: 0,
+            borderRadius: 4,
+            barThickness: 22,
+            maxBarThickness: 35,
           },
         ],
       });
@@ -125,7 +161,10 @@ const SpendingByMonthChart = () => {
   }, []);
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-4 bg-[#1E1E1E] rounded-lg shadow-lg">
+    <div
+      className="w-full h-full p-4 bg-[#1E1E1E] rounded-lg shadow-lg flex items-center justify-center"
+      style={{ minHeight: '300px' }}
+    >
       <Bar data={chartData} options={options} />
     </div>
   );

@@ -38,11 +38,16 @@ const SpendingByCategoryChart = () => {
 
   const options: ChartOptions<'pie'> = {
     responsive: true,
+    maintainAspectRatio: true,
     plugins: {
       legend: {
-        position: 'right' as const,
+        position: 'bottom' as const,
         labels: {
           color: '#D1D5DB', // Gray-300
+          boxWidth: 12,
+          font: {
+            size: 11,
+          },
         },
       },
       title: {
@@ -50,7 +55,11 @@ const SpendingByCategoryChart = () => {
         text: 'Spending by Category',
         color: '#D1D5DB',
         font: {
-          size: 16,
+          size: 14,
+        },
+        padding: {
+          top: 10,
+          bottom: 10,
         },
       },
     },
@@ -110,7 +119,7 @@ const SpendingByCategoryChart = () => {
   }, []);
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-4 bg-[#1E1E1E] rounded-lg shadow-lg">
+    <div className="w-full h-full p-2 bg-[#1E1E1E] rounded-lg shadow-lg flex items-center justify-center">
       <Pie data={chartData} options={options} />
     </div>
   );
