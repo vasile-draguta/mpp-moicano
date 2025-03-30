@@ -12,7 +12,6 @@ import {
 } from 'chart.js';
 import { getAllExpenses } from '@/app/services/expenseService';
 
-// Register ChartJS components
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const SpendingByCategoryChart = () => {
@@ -69,7 +68,6 @@ const SpendingByCategoryChart = () => {
     const updateChartData = () => {
       const expenses = getAllExpenses();
 
-      // Calculate total spending by category
       const categoryTotals = expenses.reduce<Record<string, number>>(
         (acc, expense) => {
           acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
@@ -78,7 +76,6 @@ const SpendingByCategoryChart = () => {
         {},
       );
 
-      // Sort categories by total spending (descending)
       const sortedCategories = Object.entries(categoryTotals)
         .sort(([, a], [, b]) => b - a)
         .reduce(
@@ -110,16 +107,17 @@ const SpendingByCategoryChart = () => {
       });
     };
 
-    // Initial update
     updateChartData();
 
-    // Set up event listener for when data changes
     window.addEventListener('focus', updateChartData);
     return () => window.removeEventListener('focus', updateChartData);
   }, []);
 
   return (
-    <div className="w-full h-full p-2 bg-[#1E1E1E] rounded-lg shadow-lg flex items-center justify-center">
+    <div
+      className="w-full h-full p-4 bg-[#1E1E1E] rounded-lg shadow-lg flex items-center justify-center"
+      style={{ minHeight: '300px' }}
+    >
       <Pie data={chartData} options={options} />
     </div>
   );

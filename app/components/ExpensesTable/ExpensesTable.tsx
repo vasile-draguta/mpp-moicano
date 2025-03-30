@@ -38,13 +38,11 @@ const ExpensesTableContent = ({
   >(null);
 
   useEffect(() => {
-    // Calculate pagination on the provided expenses (which may be filtered)
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     setCurrentItems(expenses.slice(startIndex, endIndex));
   }, [currentPage, itemsPerPage, expenses]);
 
-  // Calculate highest and lowest spending categories whenever expenses change
   useEffect(() => {
     const highestCategory = getHighestSpendingCategory(expenses);
     setHighestSpendingCategory(highestCategory);
@@ -62,19 +60,15 @@ const ExpensesTableContent = ({
     currency: 'USD',
   });
 
-  // Handle sorting when a column header is clicked
   const handleSortClick = (field: SortOptions['field']) => {
     if (field === sortField) {
-      // Toggle order if same field
       onSort(field, sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
-      // Default to descending for date, ascending for amount
       const defaultOrder = field === 'date' ? 'desc' : 'asc';
       onSort(field, defaultOrder);
     }
   };
 
-  // Render sort indicator
   const renderSortIndicator = (field: SortOptions['field']) => {
     if (sortField !== field) return null;
 
@@ -181,28 +175,22 @@ export default function ExpensesTable({ searchResults }: ExpensesTableProps) {
   const [sortField, setSortField] = useState<SortOptions['field']>(null);
   const [sortOrder, setSortOrder] = useState<SortOptions['order']>('desc');
 
-  // Fetch and sort expenses
   useEffect(() => {
     let expenses: Expense[];
 
     if (searchResults) {
-      // Use search results if provided
       expenses = [...searchResults];
     } else {
-      // Otherwise use all expenses
       expenses = getAllExpenses();
     }
 
-    // Apply sorting if a sort field is selected
     if (sortField === 'date') {
       expenses = sortExpensesByDate(expenses);
-      // Reverse if ascending order is selected
       if (sortOrder === 'asc') {
         expenses = expenses.reverse();
       }
     } else if (sortField === 'amount') {
       expenses = sortExpensesByAmount(expenses);
-      // Reverse if descending order is selected
       if (sortOrder === 'desc') {
         expenses = expenses.reverse();
       }
@@ -215,7 +203,6 @@ export default function ExpensesTable({ searchResults }: ExpensesTableProps) {
     setRefreshTrigger((prev) => prev + 1);
   }, []);
 
-  // Handle sorting
   const handleSort = useCallback(
     (field: SortOptions['field'], order: SortOptions['order']) => {
       setSortField(field);
@@ -224,10 +211,7 @@ export default function ExpensesTable({ searchResults }: ExpensesTableProps) {
     [],
   );
 
-  // Refresh when a new expense is added
   useEffect(() => {
-    // Set up event listener for when navigation occurs
-    // (like when returning from the new expense page)
     const handleRouteChange = () => {
       handleRefresh();
     };

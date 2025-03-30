@@ -11,7 +11,6 @@ import { Expense } from '@/app/types/Expense';
 export default function Expenses() {
   const [searchResults, setSearchResults] = useState<Expense[] | null>(null);
 
-  // Handler for search results
   const handleSearchResults = useCallback((results: Expense[]) => {
     setSearchResults(results);
   }, []);

@@ -14,15 +14,12 @@ export default function SearchField({
   const internalInputRef = useRef<HTMLInputElement>(null);
   const actualInputRef = inputRef || internalInputRef;
 
-  // Perform search when debounced query changes
   useEffect(() => {
     if (!debouncedSearchQuery.trim()) {
-      // Empty search - return all results
       onSearchResults(getAllExpenses());
       return;
     }
 
-    // Search with the debounced query
     const results = searchExpenses(debouncedSearchQuery.toLowerCase());
     onSearchResults(results);
   }, [debouncedSearchQuery, onSearchResults]);

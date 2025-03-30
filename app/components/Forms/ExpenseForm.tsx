@@ -6,7 +6,6 @@ import { z } from 'zod';
 import { addExpense, updateExpense } from '@/app/services/expenseService';
 import { Expense } from '@/app/types/Expense';
 
-// Define form schema for validation
 const expenseSchema = z.object({
   date: z.string().min(1, { message: 'Date is required' }),
   merchant: z.string().min(1, { message: 'Merchant is required' }),
@@ -22,16 +21,14 @@ const expenseSchema = z.object({
 
 type ExpenseFormData = z.infer<typeof expenseSchema>;
 
-// Default form values
 const defaultFormData: ExpenseFormData = {
-  date: new Date().toISOString().split('T')[0], // Current date in YYYY-MM-DD format
+  date: new Date().toISOString().split('T')[0],
   merchant: '',
   description: '',
   amount: '',
   category: '',
 };
 
-// Categories for the dropdown
 const categories = [
   'Food & Dining',
   'Shopping',
@@ -53,7 +50,6 @@ export default function ExpenseForm({ expenseToEdit }: ExpenseFormProps) {
   const router = useRouter();
   const isEditing = !!expenseToEdit;
 
-  // Initialize form data based on whether we're editing or creating
   const initialFormData: ExpenseFormData = isEditing
     ? {
         date: expenseToEdit.date,
@@ -78,11 +74,9 @@ export default function ExpenseForm({ expenseToEdit }: ExpenseFormProps) {
   ) => {
     const { name, value } = e.target;
     setFormData((prev: typeof formData) => ({ ...prev, [name]: value }));
-    // Clear error for this field when user starts typing
     if (errors[name as keyof ExpenseFormData]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
-    // Clear general form error if there was one
     if (formError) {
       setFormError(null);
     }
@@ -117,7 +111,6 @@ export default function ExpenseForm({ expenseToEdit }: ExpenseFormProps) {
     }
 
     try {
-      // Convert form data to the format expected by the service
       const expenseData = {
         date: formData.date,
         merchant: formData.merchant,
@@ -127,16 +120,13 @@ export default function ExpenseForm({ expenseToEdit }: ExpenseFormProps) {
       };
 
       if (isEditing && expenseToEdit) {
-        // Update existing expense
         const updatedExpense = updateExpense(expenseToEdit.id, expenseData);
         console.log('Expense updated:', updatedExpense);
       } else {
-        // Add new expense
         const newExpense = addExpense(expenseData);
         console.log('New expense added:', newExpense);
       }
 
-      // Redirect back to expenses page after saving
       router.push('/expenses');
     } catch (error) {
       console.error('Failed to save expense:', error);
@@ -150,7 +140,6 @@ export default function ExpenseForm({ expenseToEdit }: ExpenseFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl mx-auto mt-50">
-      {/* Show general form error if there is one */}
       {formError && (
         <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded">
           {formError}
@@ -158,7 +147,6 @@ export default function ExpenseForm({ expenseToEdit }: ExpenseFormProps) {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Date Field */}
         <div>
           <label
             htmlFor="date"
@@ -181,7 +169,6 @@ export default function ExpenseForm({ expenseToEdit }: ExpenseFormProps) {
           )}
         </div>
 
-        {/* Merchant Field */}
         <div>
           <label
             htmlFor="merchant"
@@ -205,7 +192,6 @@ export default function ExpenseForm({ expenseToEdit }: ExpenseFormProps) {
           )}
         </div>
 
-        {/* Amount Field */}
         <div>
           <label
             htmlFor="amount"
@@ -229,7 +215,6 @@ export default function ExpenseForm({ expenseToEdit }: ExpenseFormProps) {
           )}
         </div>
 
-        {/* Category Field */}
         <div>
           <label
             htmlFor="category"
@@ -259,7 +244,6 @@ export default function ExpenseForm({ expenseToEdit }: ExpenseFormProps) {
         </div>
       </div>
 
-      {/* Description Field - Full Width */}
       <div>
         <label
           htmlFor="description"
@@ -283,7 +267,6 @@ export default function ExpenseForm({ expenseToEdit }: ExpenseFormProps) {
         )}
       </div>
 
-      {/* Form Actions */}
       <div className="flex justify-end space-x-3 pt-4">
         <button
           type="button"

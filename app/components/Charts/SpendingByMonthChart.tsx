@@ -15,7 +15,6 @@ import {
 } from 'chart.js';
 import { getAllExpenses } from '@/app/services/expenseService';
 
-// Register ChartJS components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -101,7 +100,6 @@ const SpendingByMonthChart = () => {
     const updateChartData = () => {
       const expenses = getAllExpenses();
 
-      // Calculate total spending by month
       const monthTotals = expenses.reduce<Record<string, number>>(
         (acc, expense) => {
           const date = new Date(expense.date);
@@ -115,7 +113,6 @@ const SpendingByMonthChart = () => {
         {},
       );
 
-      // Sort months chronologically
       const sortedMonths = Object.entries(monthTotals)
         .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
         .reduce(
@@ -126,7 +123,6 @@ const SpendingByMonthChart = () => {
           {} as Record<string, number>,
         );
 
-      // Limit to last 12 months (showing more since we have even more space)
       const limitedMonths: Record<string, number> = {};
       const keys = Object.keys(sortedMonths);
       const values = Object.values(sortedMonths);
@@ -152,10 +148,8 @@ const SpendingByMonthChart = () => {
       });
     };
 
-    // Initial update
     updateChartData();
 
-    // Set up event listener for when data changes
     window.addEventListener('focus', updateChartData);
     return () => window.removeEventListener('focus', updateChartData);
   }, []);
