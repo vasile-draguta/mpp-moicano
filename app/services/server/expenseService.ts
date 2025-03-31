@@ -19,7 +19,6 @@ export async function getPaginatedExpenses(
   page: number,
   itemsPerPage: number,
 ): Promise<{ data: Expense[]; total: number }> {
-  // Basic validation
   if (page < 1 || itemsPerPage < 1) {
     throw new Error('Invalid pagination parameters');
   }
@@ -36,7 +35,6 @@ export async function getPaginatedExpenses(
 export async function addExpense(
   expenseData: Omit<Expense, 'id'>,
 ): Promise<Expense> {
-  // Validate the expense data
   const validationResult = validateNewExpense(expenseData);
   if (!validationResult.isValid) {
     throw new ValidationError(validationResult);
@@ -57,13 +55,11 @@ export async function updateExpense(
   id: number,
   expenseData: Partial<Expense>,
 ): Promise<Expense | null> {
-  // Validate ID
   const idValidation = validateExpenseId(id);
   if (!idValidation.isValid) {
     throw new ValidationError(idValidation);
   }
 
-  // Validate update data
   const updateValidation = validateExpenseUpdate(expenseData);
   if (!updateValidation.isValid) {
     throw new ValidationError(updateValidation);
@@ -84,7 +80,6 @@ export async function updateExpense(
 }
 
 export async function deleteExpense(id: number): Promise<boolean> {
-  // Validate ID
   const idValidation = validateExpenseId(id);
   if (!idValidation.isValid) {
     throw new ValidationError(idValidation);
@@ -96,7 +91,6 @@ export async function deleteExpense(id: number): Promise<boolean> {
 }
 
 export async function getExpenseById(id: number): Promise<Expense | null> {
-  // Validate ID
   const idValidation = validateExpenseId(id);
   if (!idValidation.isValid) {
     throw new ValidationError(idValidation);
@@ -107,7 +101,6 @@ export async function getExpenseById(id: number): Promise<Expense | null> {
 }
 
 export async function searchExpenses(query: string): Promise<Expense[]> {
-  // Basic validation
   if (!query || query.trim() === '') {
     throw new Error('Search query cannot be empty');
   }

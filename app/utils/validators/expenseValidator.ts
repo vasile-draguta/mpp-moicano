@@ -1,18 +1,15 @@
 import { Expense } from '@/app/types/Expense';
 
-// Define validation error type
 export type ValidationError = {
   field: string;
   message: string;
 };
 
-// Define expense validation result
 export type ValidationResult = {
   isValid: boolean;
   errors: ValidationError[];
 };
 
-// Categories allowed for expenses
 const VALID_CATEGORIES = [
   'Food',
   'Transportation',
@@ -26,15 +23,11 @@ const VALID_CATEGORIES = [
   'Other',
 ];
 
-/**
- * Validates a new expense before creation
- */
 export const validateNewExpense = (
   expense: Omit<Expense, 'id'>,
 ): ValidationResult => {
   const errors: ValidationError[] = [];
 
-  // Required fields validation
   if (!expense.merchant || expense.merchant.trim() === '') {
     errors.push({ field: 'merchant', message: 'Merchant is required' });
   } else if (expense.merchant.length > 100) {
@@ -62,7 +55,6 @@ export const validateNewExpense = (
     });
   }
 
-  // Date validation
   if (!expense.date) {
     errors.push({ field: 'date', message: 'Date is required' });
   } else {
@@ -71,15 +63,13 @@ export const validateNewExpense = (
       errors.push({ field: 'date', message: 'Invalid date format' });
     }
 
-    // Check if date is not in the future
     const today = new Date();
-    today.setHours(23, 59, 59, 999); // End of today
+    today.setHours(23, 59, 59, 999);
     if (dateObj > today) {
       errors.push({ field: 'date', message: 'Date cannot be in the future' });
     }
   }
 
-  // Amount validation
   if (expense.amount === undefined || expense.amount === null) {
     errors.push({ field: 'amount', message: 'Amount is required' });
   } else {
@@ -105,15 +95,11 @@ export const validateNewExpense = (
   };
 };
 
-/**
- * Validates expense updates
- */
 export const validateExpenseUpdate = (
   expenseUpdate: Partial<Expense>,
 ): ValidationResult => {
   const errors: ValidationError[] = [];
 
-  // Validate optional fields if they exist
   if (expenseUpdate.merchant !== undefined) {
     if (expenseUpdate.merchant.trim() === '') {
       errors.push({ field: 'merchant', message: 'Merchant cannot be empty' });
@@ -156,9 +142,8 @@ export const validateExpenseUpdate = (
       errors.push({ field: 'date', message: 'Invalid date format' });
     }
 
-    // Check if date is not in the future
     const today = new Date();
-    today.setHours(23, 59, 59, 999); // End of today
+    today.setHours(23, 59, 59, 999);
     if (dateObj > today) {
       errors.push({ field: 'date', message: 'Date cannot be in the future' });
     }
@@ -187,9 +172,6 @@ export const validateExpenseUpdate = (
   };
 };
 
-/**
- * Validates expense ID
- */
 export const validateExpenseId = (
   id: number | string | undefined | null,
 ): ValidationResult => {

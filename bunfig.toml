@@ -1,0 +1,11 @@
+[test]
+# Configure test options
+preload = ["./tests/setup.ts"]
+
+[test.typescript]
+module = "node"
+
+# Configure aliases for module resolution
+[resolvers]
+"@/app" = "./app"
+"@/tests" = "./tests" 
