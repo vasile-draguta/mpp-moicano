@@ -9,7 +9,7 @@ import {
   sortExpensesByDate,
   sortExpensesByAmount,
   getHighestSpendingCategory,
-} from '@/app/services/expenseService';
+} from '@/app/services/server/expenseService';
 import { Expense } from '@/app/types/Expense';
 
 describe('Expense Service', () => {

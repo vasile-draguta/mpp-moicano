@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
-import { deleteExpense } from '@/app/services/expenseService';
+import { deleteExpense } from '@/app/services/client/expenseService';
 import { DeleteExpenseButtonProps } from '@/app/types/Button';
 
 export default function DeleteExpenseButton({
@@ -15,7 +15,7 @@ export default function DeleteExpenseButton({
     if (window.confirm('Are you sure you want to delete this expense?')) {
       setIsDeleting(true);
       try {
-        const success = deleteExpense(expenseId);
+        const success = await deleteExpense(expenseId);
         if (success && onDelete) {
           onDelete();
         }

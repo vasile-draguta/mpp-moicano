@@ -13,7 +13,7 @@ import {
   ChartData,
   ChartOptions,
 } from 'chart.js';
-import { getAllExpenses } from '@/app/services/expenseService';
+import { getAllExpenses } from '@/app/services/client/expenseService';
 
 ChartJS.register(
   CategoryScale,
@@ -97,8 +97,8 @@ const SpendingByMonthChart = () => {
   };
 
   useEffect(() => {
-    const updateChartData = () => {
-      const expenses = getAllExpenses();
+    const updateChartData = async () => {
+      const expenses = await getAllExpenses();
 
       const monthTotals = expenses.reduce<Record<string, number>>(
         (acc, expense) => {

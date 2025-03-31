@@ -3,7 +3,7 @@
 import { Search } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import SearchField from './SearchField';
-import { getAllExpenses } from '@/app/services/expenseService';
+import { getAllExpenses } from '@/app/services/client/expenseService';
 import { SearchButtonProps } from '@/app/types/Button';
 
 export default function SearchButton({ onSearchResults }: SearchButtonProps) {
@@ -11,7 +11,7 @@ export default function SearchButton({ onSearchResults }: SearchButtonProps) {
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const toggleSearch = () => {
+  const toggleSearch = async () => {
     setIsSearchOpen((prev) => !prev);
 
     if (!isSearchOpen) {
@@ -19,25 +19,31 @@ export default function SearchButton({ onSearchResults }: SearchButtonProps) {
         searchInputRef.current?.focus();
       }, 0);
     } else {
-      onSearchResults(getAllExpenses());
+      const expenses = await getAllExpenses();
+      onSearchResults(expenses);
     }
   };
 
   useEffect(() => {
+    const loadAndShowExpenses = async () => {
+      const expenses = await getAllExpenses();
+      onSearchResults(expenses);
+    };
+
     function handleClickOutside(event: MouseEvent) {
       if (
         searchContainerRef.current &&
         !searchContainerRef.current.contains(event.target as Node)
       ) {
         setIsSearchOpen(false);
-        onSearchResults(getAllExpenses());
+        loadAndShowExpenses();
       }
     }
 
     function handleEscKey(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setIsSearchOpen(false);
-        onSearchResults(getAllExpenses());
+        loadAndShowExpenses();
       }
     }
 

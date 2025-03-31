@@ -1,6 +1,9 @@
 'use client';
 
-import { getAllExpenses, searchExpenses } from '@/app/services/expenseService';
+import {
+  getAllExpenses,
+  searchExpenses,
+} from '@/app/services/client/expenseService';
 import { useState, useEffect, useRef } from 'react';
 import { useDebounce } from '@/app/hooks/useDebounce';
 import { SearchFieldProps } from '@/app/types/Button';
@@ -15,13 +18,18 @@ export default function SearchField({
   const actualInputRef = inputRef || internalInputRef;
 
   useEffect(() => {
-    if (!debouncedSearchQuery.trim()) {
-      onSearchResults(getAllExpenses());
-      return;
-    }
+    const fetchResults = async () => {
+      if (!debouncedSearchQuery.trim()) {
+        const expenses = await getAllExpenses();
+        onSearchResults(expenses);
+        return;
+      }
 
-    const results = searchExpenses(debouncedSearchQuery.toLowerCase());
-    onSearchResults(results);
+      const results = await searchExpenses(debouncedSearchQuery.toLowerCase());
+      onSearchResults(results);
+    };
+
+    fetchResults();
   }, [debouncedSearchQuery, onSearchResults]);
 
   return (

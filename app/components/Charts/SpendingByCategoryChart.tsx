@@ -10,7 +10,7 @@ import {
   ChartData,
   ChartOptions,
 } from 'chart.js';
-import { getAllExpenses } from '@/app/services/expenseService';
+import { getAllExpenses } from '@/app/services/client/expenseService';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -65,8 +65,8 @@ const SpendingByCategoryChart = () => {
   };
 
   useEffect(() => {
-    const updateChartData = () => {
-      const expenses = getAllExpenses();
+    const updateChartData = async () => {
+      const expenses = await getAllExpenses();
 
       const categoryTotals = expenses.reduce<Record<string, number>>(
         (acc, expense) => {

@@ -3,7 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
-import { addExpense, updateExpense } from '@/app/services/expenseService';
+import {
+  addExpense,
+  updateExpense,
+} from '@/app/services/client/expenseService';
 import { Expense } from '@/app/types/Expense';
 
 const expenseSchema = z.object({

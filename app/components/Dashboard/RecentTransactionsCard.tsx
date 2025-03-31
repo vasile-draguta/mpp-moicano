@@ -1,18 +1,22 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getAllExpenses } from '@/app/services/expenseService';
+import { getAllExpenses } from '@/app/services/client/expenseService';
 import { Expense } from '@/app/types/Expense';
 
 const RecentTransactionsCard = () => {
   const [recentTransactions, setRecentTransactions] = useState<Expense[]>([]);
 
   useEffect(() => {
-    const expenses = getAllExpenses();
-    const sortedExpenses = [...expenses].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-    );
-    setRecentTransactions(sortedExpenses.slice(0, 5));
+    const fetchRecentTransactions = async () => {
+      const expenses = await getAllExpenses();
+      const sortedExpenses = [...expenses].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+      );
+      setRecentTransactions(sortedExpenses.slice(0, 5));
+    };
+
+    fetchRecentTransactions();
   }, []);
 
   const formatter = new Intl.NumberFormat('en-US', {

@@ -1,18 +1,29 @@
-'use client';
+'use server';
 
-import { expenses as mockExpenses } from '../utils/mockData';
+import { expenses as mockExpenses } from '../../utils/mockData';
 import { Expense } from '@/app/types/Expense';
+import {
+  validateNewExpense,
+  validateExpenseUpdate,
+  validateExpenseId,
+} from '@/app/utils/validators/expenseValidator';
+import { ValidationError } from '@/app/utils/errors/ValidationError';
 
 let expenses: Expense[] = [...mockExpenses];
 
-export const getAllExpenses = (): Expense[] => {
+export async function getAllExpenses(): Promise<Expense[]> {
   return expenses;
-};
+}
 
-export const getPaginatedExpenses = (
+export async function getPaginatedExpenses(
   page: number,
   itemsPerPage: number,
-): { data: Expense[]; total: number } => {
+): Promise<{ data: Expense[]; total: number }> {
+  // Basic validation
+  if (page < 1 || itemsPerPage < 1) {
+    throw new Error('Invalid pagination parameters');
+  }
+
   const startIndex = (page - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
 
@@ -20,9 +31,17 @@ export const getPaginatedExpenses = (
     data: expenses.slice(startIndex, endIndex),
     total: expenses.length,
   };
-};
+}
 
-export const addExpense = (expenseData: Omit<Expense, 'id'>): Expense => {
+export async function addExpense(
+  expenseData: Omit<Expense, 'id'>,
+): Promise<Expense> {
+  // Validate the expense data
+  const validationResult = validateNewExpense(expenseData);
+  if (!validationResult.isValid) {
+    throw new ValidationError(validationResult);
+  }
+
   const newId = Math.max(...expenses.map((e) => e.id), 0) + 1;
   const newExpense: Expense = {
     ...expenseData,
@@ -32,12 +51,24 @@ export const addExpense = (expenseData: Omit<Expense, 'id'>): Expense => {
 
   expenses = [newExpense, ...expenses];
   return newExpense;
-};
+}
 
-export const updateExpense = (
+export async function updateExpense(
   id: number,
   expenseData: Partial<Expense>,
-): Expense | null => {
+): Promise<Expense | null> {
+  // Validate ID
+  const idValidation = validateExpenseId(id);
+  if (!idValidation.isValid) {
+    throw new ValidationError(idValidation);
+  }
+
+  // Validate update data
+  const updateValidation = validateExpenseUpdate(expenseData);
+  if (!updateValidation.isValid) {
+    throw new ValidationError(updateValidation);
+  }
+
   const index = expenses.findIndex((e) => e.id === id);
   if (index === -1) {
     return null;
@@ -50,20 +81,37 @@ export const updateExpense = (
 
   expenses[index] = updatedExpense;
   return updatedExpense;
-};
+}
 
-export const deleteExpense = (id: number): boolean => {
+export async function deleteExpense(id: number): Promise<boolean> {
+  // Validate ID
+  const idValidation = validateExpenseId(id);
+  if (!idValidation.isValid) {
+    throw new ValidationError(idValidation);
+  }
+
   const initialLength = expenses.length;
   expenses = expenses.filter((e) => e.id !== id);
   return expenses.length < initialLength;
-};
+}
 
-export const getExpenseById = (id: number): Expense | null => {
+export async function getExpenseById(id: number): Promise<Expense | null> {
+  // Validate ID
+  const idValidation = validateExpenseId(id);
+  if (!idValidation.isValid) {
+    throw new ValidationError(idValidation);
+  }
+
   const expense = expenses.find((e) => e.id === id);
   return expense || null;
-};
+}
 
-export const searchExpenses = (query: string): Expense[] => {
+export async function searchExpenses(query: string): Promise<Expense[]> {
+  // Basic validation
+  if (!query || query.trim() === '') {
+    throw new Error('Search query cannot be empty');
+  }
+
   const lowerCaseQuery = query.toLowerCase();
   return expenses.filter(
     (e) =>
@@ -71,21 +119,25 @@ export const searchExpenses = (query: string): Expense[] => {
       e.description.toLowerCase().includes(lowerCaseQuery) ||
       e.category.toLowerCase().includes(lowerCaseQuery),
   );
-};
+}
 
-export const sortExpensesByDate = (expenses: Expense[]): Expense[] => {
+export async function sortExpensesByDate(
+  expenses: Expense[],
+): Promise<Expense[]> {
   return [...expenses].sort((a, b) => {
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
-};
+}
 
-export const sortExpensesByAmount = (expenses: Expense[]): Expense[] => {
+export async function sortExpensesByAmount(
+  expenses: Expense[],
+): Promise<Expense[]> {
   return [...expenses].sort((a, b) => a.amount - b.amount);
-};
+}
 
-export const getHighestSpendingCategory = (
+export async function getHighestSpendingCategory(
   expensesToAnalyze: Expense[] = expenses,
-): string | null => {
+): Promise<string | null> {
   if (expensesToAnalyze.length === 0) return null;
 
   const categoryTotals = expensesToAnalyze.reduce<Record<string, number>>(
@@ -108,11 +160,11 @@ export const getHighestSpendingCategory = (
   });
 
   return highestCategory;
-};
+}
 
-export const getLowestSpendingCategory = (
+export async function getLowestSpendingCategory(
   expensesToAnalyze: Expense[] = expenses,
-): string | null => {
+): Promise<string | null> {
   if (expensesToAnalyze.length === 0) return null;
 
   const categoryTotals = expensesToAnalyze.reduce<Record<string, number>>(
@@ -135,4 +187,4 @@ export const getLowestSpendingCategory = (
   });
 
   return lowestCategory;
-};
+}

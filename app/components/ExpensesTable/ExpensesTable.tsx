@@ -10,7 +10,7 @@ import {
   sortExpensesByAmount,
   getHighestSpendingCategory,
   getLowestSpendingCategory,
-} from '@/app/services/expenseService';
+} from '@/app/services/client/expenseService';
 import DeleteExpenseButton from '../Buttons/DeleteExpenseButton';
 import EditExpenseButton from '../Buttons/EditExpenseButton';
 import { Expense } from '@/app/types/Expense';
@@ -44,11 +44,15 @@ const ExpensesTableContent = ({
   }, [currentPage, itemsPerPage, expenses]);
 
   useEffect(() => {
-    const highestCategory = getHighestSpendingCategory(expenses);
-    setHighestSpendingCategory(highestCategory);
+    const fetchCategoryData = async () => {
+      const highestCategory = await getHighestSpendingCategory(expenses);
+      setHighestSpendingCategory(highestCategory);
 
-    const lowestCategory = getLowestSpendingCategory(expenses);
-    setLowestSpendingCategory(lowestCategory);
+      const lowestCategory = await getLowestSpendingCategory(expenses);
+      setLowestSpendingCategory(lowestCategory);
+    };
+
+    fetchCategoryData();
   }, [expenses]);
 
   const handleExpenseDeleted = () => {
@@ -176,27 +180,31 @@ export default function ExpensesTable({ searchResults }: ExpensesTableProps) {
   const [sortOrder, setSortOrder] = useState<SortOptions['order']>('desc');
 
   useEffect(() => {
-    let expenses: Expense[];
+    const fetchAndSortExpenses = async () => {
+      let expenses: Expense[];
 
-    if (searchResults) {
-      expenses = [...searchResults];
-    } else {
-      expenses = getAllExpenses();
-    }
-
-    if (sortField === 'date') {
-      expenses = sortExpensesByDate(expenses);
-      if (sortOrder === 'asc') {
-        expenses = expenses.reverse();
+      if (searchResults) {
+        expenses = [...searchResults];
+      } else {
+        expenses = await getAllExpenses();
       }
-    } else if (sortField === 'amount') {
-      expenses = sortExpensesByAmount(expenses);
-      if (sortOrder === 'desc') {
-        expenses = expenses.reverse();
-      }
-    }
 
-    setFilteredExpenses(expenses);
+      if (sortField === 'date') {
+        expenses = sortExpensesByDate(expenses);
+        if (sortOrder === 'asc') {
+          expenses = expenses.reverse();
+        }
+      } else if (sortField === 'amount') {
+        expenses = sortExpensesByAmount(expenses);
+        if (sortOrder === 'desc') {
+          expenses = expenses.reverse();
+        }
+      }
+
+      setFilteredExpenses(expenses);
+    };
+
+    fetchAndSortExpenses();
   }, [searchResults, refreshTrigger, sortField, sortOrder]);
 
   const handleRefresh = useCallback(() => {

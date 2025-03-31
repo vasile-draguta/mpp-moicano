@@ -1,30 +1,34 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getAllExpenses } from '@/app/services/expenseService';
+import { getAllExpenses } from '@/app/services/client/expenseService';
 
 const MonthlySpendCard = () => {
   const [totalMonthlySpend, setTotalMonthlySpend] = useState(0);
 
   useEffect(() => {
-    const expenses = getAllExpenses();
-    const currentDate = new Date();
-    const currentMonth = currentDate.getMonth();
-    const currentYear = currentDate.getFullYear();
+    const calculateMonthlySpend = async () => {
+      const expenses = await getAllExpenses();
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth();
+      const currentYear = currentDate.getFullYear();
 
-    const monthlyExpenses = expenses.filter((expense) => {
-      const expenseDate = new Date(expense.date);
-      return (
-        expenseDate.getMonth() === currentMonth &&
-        expenseDate.getFullYear() === currentYear
+      const monthlyExpenses = expenses.filter((expense) => {
+        const expenseDate = new Date(expense.date);
+        return (
+          expenseDate.getMonth() === currentMonth &&
+          expenseDate.getFullYear() === currentYear
+        );
+      });
+
+      const total = monthlyExpenses.reduce(
+        (sum: number, expense) => sum + expense.amount,
+        0,
       );
-    });
+      setTotalMonthlySpend(total);
+    };
 
-    const total = monthlyExpenses.reduce(
-      (sum, expense) => sum + expense.amount,
-      0,
-    );
-    setTotalMonthlySpend(total);
+    calculateMonthlySpend();
   }, []);
 
   const formatter = new Intl.NumberFormat('en-US', {
