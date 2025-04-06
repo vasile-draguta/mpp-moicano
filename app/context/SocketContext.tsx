@@ -74,6 +74,73 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   const [lastEventTime, setLastEventTime] = useState<Date | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // Function to initialize connection
+  const initConnection = async () => {
+    if (socket) return; // Already initialized
+
+    try {
+      const response = await fetch('/api/socket');
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to start WebSocket server: ${errorText}`);
+      }
+
+      const socketUrl = 'http://localhost:3001';
+      const socketInstance = io(socketUrl, {
+        transports: ['websocket', 'polling'],
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        timeout: 5000,
+      });
+
+      socketInstance.on('connect', () => {
+        setConnected(true);
+        setConnectionError(null);
+
+        socketInstance?.emit('ping', () => {
+          setLastEventTime(new Date());
+        });
+      });
+
+      socketInstance.on('connect_error', (err) => {
+        setConnectionError(`Connection error: ${err.message}`);
+        setConnected(false);
+      });
+
+      socketInstance.on('disconnect', () => {
+        setConnected(false);
+      });
+
+      socketInstance.on('new-expense', (newExpense: Expense) => {
+        setLastEventTime(new Date());
+        setExpenses((prev) => [newExpense, ...prev]);
+      });
+
+      socketInstance.on('expenses-list', (expensesList: Expense[]) => {
+        setLastEventTime(new Date());
+        setExpenses(expensesList);
+      });
+
+      socketInstance.on('chart-data-update', (data: ChartData) => {
+        setLastEventTime(new Date());
+        setChartData(data);
+      });
+
+      // Listen for generation status updates
+      socketInstance.on('generation-status', (status: { running: boolean }) => {
+        setIsGenerating(status.running);
+      });
+
+      setSocket(socketInstance);
+      return socketInstance;
+    } catch (error) {
+      setConnectionError(`Failed to connect: ${(error as Error).message}`);
+      setConnected(false);
+      return null;
+    }
+  };
+
   // Function to stop data generation
   const stopGeneration = () => {
     if (socket && connected) {
@@ -82,90 +149,37 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // Function to start data generation
-  const startGeneration = () => {
-    if (socket && connected) {
-      socket.emit('start-generation');
+  const startGeneration = async () => {
+    // Initialize connection first if not already connected
+    let currentSocket = socket;
+    if (!currentSocket) {
+      const newSocket = await initConnection();
+      if (!newSocket) return; // Connection failed
+      currentSocket = newSocket;
+    }
+
+    if (currentSocket && connected) {
+      currentSocket.emit('start-generation');
+    } else if (currentSocket) {
+      // If socket exists but not connected, wait for connection then emit
+      const connectHandler = () => {
+        if (currentSocket) {
+          currentSocket.emit('start-generation');
+          currentSocket.off('connect', connectHandler);
+        }
+      };
+      currentSocket.on('connect', connectHandler);
     }
   };
 
+  // Cleanup function for socket
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    let socketInstance: Socket | null = null;
-
-    const initConnection = async () => {
-      try {
-        const response = await fetch('/api/socket');
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Failed to start WebSocket server: ${errorText}`);
-        }
-
-        const socketUrl = 'http://localhost:3001';
-        socketInstance = io(socketUrl, {
-          transports: ['websocket', 'polling'],
-          reconnectionAttempts: 5,
-          reconnectionDelay: 1000,
-          timeout: 5000,
-        });
-
-        socketInstance.on('connect', () => {
-          setConnected(true);
-          setConnectionError(null);
-
-          socketInstance?.emit('ping', () => {
-            setLastEventTime(new Date());
-          });
-        });
-
-        socketInstance.on('connect_error', (err) => {
-          setConnectionError(`Connection error: ${err.message}`);
-          setConnected(false);
-        });
-
-        socketInstance.on('disconnect', () => {
-          setConnected(false);
-        });
-
-        socketInstance.on('new-expense', (newExpense: Expense) => {
-          setLastEventTime(new Date());
-          setExpenses((prev) => [newExpense, ...prev]);
-        });
-
-        socketInstance.on('expenses-list', (expensesList: Expense[]) => {
-          setLastEventTime(new Date());
-          setExpenses(expensesList);
-        });
-
-        socketInstance.on('chart-data-update', (data: ChartData) => {
-          setLastEventTime(new Date());
-          setChartData(data);
-        });
-
-        // Listen for generation status updates
-        socketInstance.on(
-          'generation-status',
-          (status: { running: boolean }) => {
-            setIsGenerating(status.running);
-          },
-        );
-
-        setSocket(socketInstance);
-      } catch (error) {
-        setConnectionError(`Failed to connect: ${(error as Error).message}`);
-        setConnected(false);
-      }
-    };
-
-    initConnection();
-
     return () => {
-      if (socketInstance) {
-        socketInstance.disconnect();
+      if (socket) {
+        socket.disconnect();
       }
     };
-  }, []);
+  }, [socket]);
 
   return (
     <SocketContext.Provider

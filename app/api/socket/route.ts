@@ -135,8 +135,6 @@ export async function GET() {
       httpServer.listen(port, () => {
         console.log(`Socket.IO server running on port ${port}`);
         isServerRunning = true;
-
-        startDataGenerationThread();
       });
 
       httpServer.on('error', (err) => {

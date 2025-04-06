@@ -38,6 +38,7 @@ export default function RealTimeDashboard() {
     isGenerating,
     startGeneration,
     stopGeneration,
+    socket,
   } = useSocket();
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -49,11 +50,11 @@ export default function RealTimeDashboard() {
     return () => clearInterval(timer);
   }, []);
 
-  // Trigger server-side API call to start the socket server
-  useEffect(() => {
-    // Fetch the API to ensure server is running
-    fetch('/api/socket').catch(() => {});
-  }, []);
+  // Trigger server-side API call to start the socket server is now handled in startGeneration
+  // useEffect(() => {
+  //   // Fetch the API to ensure server is running
+  //   fetch('/api/socket').catch(() => {});
+  // }, []);
 
   // Get month names for chart
   const getMonthName = (monthNumber: number) => {
@@ -114,10 +115,14 @@ export default function RealTimeDashboard() {
           <div>
             <p className="text-sm text-gray-300">
               Connection Status:{' '}
-              {connected ? (
-                <span className="text-green-500">Connected</span>
+              {socket ? (
+                connected ? (
+                  <span className="text-green-500">Connected</span>
+                ) : (
+                  <span className="text-yellow-500">Connecting...</span>
+                )
               ) : (
-                <span className="text-red-500">Disconnected</span>
+                <span className="text-gray-500">Not Connected</span>
               )}
               {' | '}
               Data Generation:{' '}
@@ -131,8 +136,9 @@ export default function RealTimeDashboard() {
               <p className="text-xs text-red-400 mt-1">{connectionError}</p>
             )}
             <p className="text-xs text-gray-400 mt-1">
-              The server is generating new expenses every 5 seconds and updating
-              the charts in real-time.
+              {socket
+                ? 'The server generates new expenses every 5 seconds when running and updates the charts in real-time.'
+                : "Press 'Connect & Start' to establish a connection and begin generating expense data."}
             </p>
             <p className="text-xs text-gray-300 mt-1">
               Last event received:{' '}
@@ -152,7 +158,11 @@ export default function RealTimeDashboard() {
                   : 'bg-green-500/20 hover:bg-green-500/30'
               } rounded-md text-gray-300 flex items-center`}
               title={
-                isGenerating ? 'Stop data generation' : 'Start data generation'
+                isGenerating
+                  ? 'Stop data generation'
+                  : socket
+                    ? 'Start data generation'
+                    : 'Connect and start data generation'
               }
             >
               {isGenerating ? (
@@ -161,7 +171,8 @@ export default function RealTimeDashboard() {
                 </>
               ) : (
                 <>
-                  <Play size={16} className="mr-1" /> Start
+                  <Play size={16} className="mr-1" />{' '}
+                  {socket ? 'Start' : 'Connect & Start'}
                 </>
               )}
             </button>
