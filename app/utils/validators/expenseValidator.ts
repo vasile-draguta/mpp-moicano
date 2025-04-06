@@ -100,6 +100,10 @@ export const validateExpenseUpdate = (
 ): ValidationResult => {
   const errors: ValidationError[] = [];
 
+  if (expenseUpdate.id !== undefined) {
+    errors.push({ field: 'id', message: 'ID cannot be updated' });
+  }
+
   if (expenseUpdate.merchant !== undefined) {
     if (expenseUpdate.merchant.trim() === '') {
       errors.push({ field: 'merchant', message: 'Merchant cannot be empty' });

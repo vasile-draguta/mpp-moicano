@@ -7,7 +7,6 @@ import {
   validateExpenseId,
 } from '@/app/utils/validators/expenseValidator';
 
-// API helper function for making requests
 const apiRequest = async <T>(
   url: string,
   options?: RequestInit,
@@ -21,7 +20,6 @@ const apiRequest = async <T>(
   return response.json();
 };
 
-// Get all expenses
 export const getAllExpenses = async (sortBy?: string): Promise<Expense[]> => {
   const url = sortBy ? `/api/expense?sortBy=${sortBy}` : '/api/expense';
 
@@ -29,7 +27,6 @@ export const getAllExpenses = async (sortBy?: string): Promise<Expense[]> => {
   return response.data;
 };
 
-// Get paginated expenses
 export const getPaginatedExpenses = async (
   page: number,
   itemsPerPage: number,
@@ -38,11 +35,9 @@ export const getPaginatedExpenses = async (
   return apiRequest<{ data: Expense[]; total: number }>(url);
 };
 
-// Add a new expense
 export const addExpense = async (
   expenseData: Omit<Expense, 'id'>,
 ): Promise<Expense> => {
-  // Validate the expense data
   const validationResult = validateNewExpense(expenseData);
 
   if (!validationResult.isValid) {
@@ -60,12 +55,10 @@ export const addExpense = async (
   });
 };
 
-// Update an expense
 export const updateExpense = async (
   id: number,
   expenseData: Partial<Expense>,
 ): Promise<Expense | null> => {
-  // Validate the ID and update data
   const idValidation = validateExpenseId(id);
   if (!idValidation.isValid) {
     throw new Error(`Invalid ID: ${JSON.stringify(idValidation.errors)}`);
@@ -87,7 +80,6 @@ export const updateExpense = async (
       body: JSON.stringify(expenseData),
     });
   } catch (error) {
-    // If 404, return null to match server-side behavior
     if (error instanceof Error && error.message.includes('404')) {
       return null;
     }
@@ -95,9 +87,7 @@ export const updateExpense = async (
   }
 };
 
-// Delete an expense
 export const deleteExpense = async (id: number): Promise<boolean> => {
-  // Validate the ID
   const idValidation = validateExpenseId(id);
   if (!idValidation.isValid) {
     throw new Error(`Invalid ID: ${JSON.stringify(idValidation.errors)}`);
@@ -113,9 +103,7 @@ export const deleteExpense = async (id: number): Promise<boolean> => {
   }
 };
 
-// Get expense by ID
 export const getExpenseById = async (id: number): Promise<Expense | null> => {
-  // Validate the ID
   const idValidation = validateExpenseId(id);
   if (!idValidation.isValid) {
     throw new Error(`Invalid ID: ${JSON.stringify(idValidation.errors)}`);
@@ -124,7 +112,6 @@ export const getExpenseById = async (id: number): Promise<Expense | null> => {
   try {
     return await apiRequest<Expense>(`/api/expense/${id}`);
   } catch (error) {
-    // If 404, return null to match server-side behavior
     if (error instanceof Error && error.message.includes('404')) {
       return null;
     }
@@ -132,30 +119,25 @@ export const getExpenseById = async (id: number): Promise<Expense | null> => {
   }
 };
 
-// Search expenses
 export const searchExpenses = async (query: string): Promise<Expense[]> => {
   const url = `/api/expense/search?q=${encodeURIComponent(query)}`;
   const response = await apiRequest<{ data: Expense[]; total: number }>(url);
   return response.data;
 };
 
-// Sort expenses by date (client-side fallback if needed)
 export const sortExpensesByDate = (expenses: Expense[]): Expense[] => {
   return [...expenses].sort((a, b) => {
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 };
 
-// Sort expenses by amount (client-side fallback if needed)
 export const sortExpensesByAmount = (expenses: Expense[]): Expense[] => {
   return [...expenses].sort((a, b) => a.amount - b.amount);
 };
 
-// Get highest spending category
 export const getHighestSpendingCategory = async (
   expensesToAnalyze?: Expense[],
 ): Promise<string | null> => {
-  // If expenses are provided, calculate client-side
   if (expensesToAnalyze) {
     if (expensesToAnalyze.length === 0) return null;
 
@@ -181,16 +163,13 @@ export const getHighestSpendingCategory = async (
     return highestCategory;
   }
 
-  // Otherwise fetch all expenses and calculate
   const expenses = await getAllExpenses();
   return getHighestSpendingCategory(expenses);
 };
 
-// Get lowest spending category
 export const getLowestSpendingCategory = async (
   expensesToAnalyze?: Expense[],
 ): Promise<string | null> => {
-  // If expenses are provided, calculate client-side
   if (expensesToAnalyze) {
     if (expensesToAnalyze.length === 0) return null;
 
@@ -216,7 +195,6 @@ export const getLowestSpendingCategory = async (
     return lowestCategory;
   }
 
-  // Otherwise fetch all expenses and calculate
   const expenses = await getAllExpenses();
   return getLowestSpendingCategory(expenses);
 };
