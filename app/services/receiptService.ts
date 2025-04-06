@@ -8,37 +8,37 @@ const initialReceipts: Receipt[] = [
   {
     id: 1,
     name: 'Grocery receipt',
-    url: 'https://placehold.co/100x150/333333/CCCCCC?text=Receipt',
+    url: 'https://via.placeholder.com/100x150/333333/CCCCCC?text=Receipt',
     date: '2023-04-01',
   },
   {
     id: 2,
     name: 'Restaurant bill',
-    url: 'https://placehold.co/100x150/333333/CCCCCC?text=Receipt',
+    url: 'https://via.placeholder.com/100x150/333333/CCCCCC?text=Receipt',
     date: '2023-04-05',
   },
   {
     id: 3,
     name: 'Gas station',
-    url: 'https://placehold.co/100x150/333333/CCCCCC?text=Receipt',
+    url: 'https://via.placeholder.com/100x150/333333/CCCCCC?text=Receipt',
     date: '2023-04-10',
   },
   {
     id: 4,
     name: 'Coffee shop',
-    url: 'https://placehold.co/100x150/333333/CCCCCC?text=Receipt',
+    url: 'https://via.placeholder.com/100x150/333333/CCCCCC?text=Receipt',
     date: '2023-04-12',
   },
   {
     id: 5,
     name: 'Pharmacy',
-    url: 'https://placehold.co/100x150/333333/CCCCCC?text=Receipt',
+    url: 'https://via.placeholder.com/100x150/333333/CCCCCC?text=Receipt',
     date: '2023-04-15',
   },
   {
     id: 6,
     name: 'Hardware store',
-    url: 'https://placehold.co/100x150/333333/CCCCCC?text=Receipt',
+    url: 'https://via.placeholder.com/100x150/333333/CCCCCC?text=Receipt',
     date: '2023-04-18',
   },
 ];
