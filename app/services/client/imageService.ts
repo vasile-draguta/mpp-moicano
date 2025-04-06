@@ -1,12 +1,3 @@
-/**
- * Image processing service for receipts
- */
-
-/**
- * Process and resize an image to a 3:4 aspect ratio
- * @param file The file to process
- * @returns Promise with the processed image URL
- */
 export const processImage = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
