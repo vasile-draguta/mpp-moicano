@@ -2,55 +2,58 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, CreditCard, User } from 'lucide-react';
+import { Home, Receipt, User, LogOut } from 'lucide-react';
 
-const menuItems = [
-  { name: 'Home', href: '/', icon: <Home className="w-6 h-6" /> },
-  {
-    name: 'Expenses',
-    href: '/expenses',
-    icon: <CreditCard className="w-6 h-6" />,
-  },
+type SidebarMenuProps = {
+  onLogout: () => void;
+};
 
-  { name: 'Account', href: '/account', icon: <User className="w-6 h-6" /> },
-];
-
-export default function SidebarMenu() {
+export default function SidebarMenu({ onLogout }: SidebarMenuProps) {
   const pathname = usePathname();
 
-  return (
-    <nav className="mt-40 px-4">
-      <ul className="flex flex-col items-center">
-        {menuItems.map((item) => {
-          const isActive = pathname === item.href;
+  const menuItems = [
+    { name: 'Dashboard', href: '/', icon: <Home size={20} /> },
+    {
+      name: 'Expenses',
+      href: '/expenses',
+      icon: <Receipt size={20} />,
+    },
+    { name: 'Account', href: '/account', icon: <User size={20} /> },
+  ];
 
-          return (
-            <li key={item.name} className="w-full mb-3">
-              <Link
-                href={item.href}
-                className={`flex items-center p-3 rounded-lg ${
-                  isActive ? 'bg-purple-300/10' : ''
-                }`}
-              >
-                <div className="flex justify-center w-10">
-                  <div
-                    className={`${
-                      isActive ? 'text-purple-300' : 'text-gray-300'
-                    }`}
-                  >
-                    {item.icon}
-                  </div>
-                </div>
-                <span
-                  className={`text-lg ${isActive ? 'font-medium text-purple-300' : 'text-gray-300 font-normal'}`}
-                >
-                  {item.name}
-                </span>
-              </Link>
-            </li>
-          );
-        })}
+  const isActive = (path: string) => {
+    return pathname === path || pathname?.startsWith(`${path}/`);
+  };
+
+  return (
+    <nav className="flex-1 p-4">
+      <ul className="space-y-2">
+        {menuItems.map((item) => (
+          <li key={item.name}>
+            <Link
+              href={item.href}
+              className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+                isActive(item.href)
+                  ? 'bg-purple-300/10 text-purple-300'
+                  : 'text-gray-400 hover:text-gray-300 hover:bg-purple-300/5'
+              }`}
+            >
+              {item.icon}
+              <span>{item.name}</span>
+            </Link>
+          </li>
+        ))}
       </ul>
+
+      <div className="mt-4 pt-4 border-t border-purple-300/10">
+        <button
+          onClick={onLogout}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-red-400 hover:bg-red-400/5 transition-colors"
+        >
+          <LogOut size={20} />
+          <span>Logout</span>
+        </button>
+      </div>
     </nav>
   );
 }

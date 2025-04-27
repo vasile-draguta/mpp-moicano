@@ -1,21 +1,23 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
-
-async function main() {
-  await prisma.test.create({
-    data: {
-      name: "test",
-    },
-  });
+// Prevent multiple instances of Prisma Client in development
+declare global {
+  // eslint-disable-next-line no-var
+  var prisma: PrismaClient | undefined;
 }
 
-main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (e) => {
-    console.error(e);
-    await prisma.$disconnect();
-    process.exit(1);
+// Create Prisma client instance
+const prismaClientSingleton = () => {
+  return new PrismaClient({
+    log:
+      process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : [],
   });
+};
+
+const prisma = globalThis.prisma ?? prismaClientSingleton();
+
+if (process.env.NODE_ENV !== 'production') {
+  globalThis.prisma = prisma;
+}
+
+export default prisma;

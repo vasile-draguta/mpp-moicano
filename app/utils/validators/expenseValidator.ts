@@ -23,6 +23,18 @@ const VALID_CATEGORIES = [
   'Other',
 ];
 
+// Map old category names to new ones for backwards compatibility
+const CATEGORY_MAPPING: Record<string, string> = {
+  'Food & Dining': 'Food',
+  'Health & Fitness': 'Healthcare',
+  'Gifts & Donations': 'Other',
+};
+
+// Helper to normalize categories
+const normalizeCategory = (category: string): string => {
+  return CATEGORY_MAPPING[category] || category;
+};
+
 export const validateNewExpense = (
   expense: Omit<Expense, 'id'>,
 ): ValidationResult => {
@@ -48,11 +60,14 @@ export const validateNewExpense = (
 
   if (!expense.category) {
     errors.push({ field: 'category', message: 'Category is required' });
-  } else if (!VALID_CATEGORIES.includes(expense.category)) {
-    errors.push({
-      field: 'category',
-      message: `Category must be one of: ${VALID_CATEGORIES.join(', ')}`,
-    });
+  } else {
+    const normalizedCategory = normalizeCategory(expense.category);
+    if (!VALID_CATEGORIES.includes(normalizedCategory)) {
+      errors.push({
+        field: 'category',
+        message: `Category must be one of: ${VALID_CATEGORIES.join(', ')}`,
+      });
+    }
   }
 
   if (!expense.date) {
@@ -132,11 +147,14 @@ export const validateExpenseUpdate = (
   if (expenseUpdate.category !== undefined) {
     if (expenseUpdate.category.trim() === '') {
       errors.push({ field: 'category', message: 'Category cannot be empty' });
-    } else if (!VALID_CATEGORIES.includes(expenseUpdate.category)) {
-      errors.push({
-        field: 'category',
-        message: `Category must be one of: ${VALID_CATEGORIES.join(', ')}`,
-      });
+    } else {
+      const normalizedCategory = normalizeCategory(expenseUpdate.category);
+      if (!VALID_CATEGORIES.includes(normalizedCategory)) {
+        errors.push({
+          field: 'category',
+          message: `Category must be one of: ${VALID_CATEGORIES.join(', ')}`,
+        });
+      }
     }
   }
 

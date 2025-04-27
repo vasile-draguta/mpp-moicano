@@ -1,17 +1,28 @@
 'use client';
 
-import Avatar from './Avatar';
+import { useAuth } from '@/app/contexts/AuthContext';
 import SidebarMenu from './SidebarMenu';
 
 export default function Sidebar() {
+  const { user, logout } = useAuth();
+
   return (
-    <div className="flex flex-col h-screen w-64">
-      <div className="pt-6 px-4">
-        <Avatar src="/johndoe.png" alt="JohnDoe" username="John Doe" />
+    <div className="h-full w-64 overflow-y-auto flex flex-col bg-[#1A1A1A]">
+      <div className="p-4 border-b border-purple-300/10">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-600 text-transparent bg-clip-text">
+          Expense Tracker
+        </h1>
       </div>
 
-      <div className="flex-1 flex flex-col">
-        <SidebarMenu />
+      <SidebarMenu onLogout={logout} />
+
+      <div className="p-4 border-t border-purple-300/10">
+        <div className="overflow-hidden">
+          <p className="text-gray-300 font-medium truncate">
+            {user?.name || 'User'}
+          </p>
+          <p className="text-gray-500 text-sm truncate">{user?.email}</p>
+        </div>
       </div>
     </div>
   );

@@ -13,7 +13,27 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Test {
-  id   Int    @id @default(autoincrement())
-  name String @db.VarChar(255)
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  name      String?
+  password  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  expenses  Expense[]
+}
+
+model Expense {
+  id          Int      @id @default(autoincrement())
+  date        DateTime
+  description String
+  amount      Float
+  category    String
+  merchant    String
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
 }

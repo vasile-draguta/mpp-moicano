@@ -1,6 +1,6 @@
 'use server';
 
-import { expenses as mockExpenses } from '../../utils/mockData';
+import prisma from '@/app/db';
 import { Expense } from '@/app/types/Expense';
 import {
   validateNewExpense,
@@ -8,11 +8,33 @@ import {
   validateExpenseId,
 } from '@/app/utils/validators/expenseValidator';
 import { ValidationError } from '@/app/utils/errors/ValidationError';
+import { getCurrentUserId } from './authService';
 
-let expenses: Expense[] = [...mockExpenses];
+// Map old category names to new ones for backwards compatibility
+const CATEGORY_MAPPING: Record<string, string> = {
+  'Food & Dining': 'Food',
+  'Health & Fitness': 'Healthcare',
+  'Gifts & Donations': 'Other',
+};
+
+// Helper to normalize categories
+const normalizeCategory = (category: string): string => {
+  return CATEGORY_MAPPING[category] || category;
+};
 
 export async function getAllExpenses(): Promise<Expense[]> {
-  return expenses;
+  const userId = await getCurrentUserId();
+
+  if (!userId) {
+    return [];
+  }
+
+  const expenses = await prisma.expense.findMany({
+    where: { userId },
+    orderBy: { date: 'desc' },
+  });
+
+  return expenses.map(formatExpense);
 }
 
 export async function getPaginatedExpenses(
@@ -23,12 +45,27 @@ export async function getPaginatedExpenses(
     throw new Error('Invalid pagination parameters');
   }
 
-  const startIndex = (page - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
+  const userId = await getCurrentUserId();
+
+  if (!userId) {
+    return { data: [], total: 0 };
+  }
+
+  const skip = (page - 1) * itemsPerPage;
+
+  const [expenses, total] = await Promise.all([
+    prisma.expense.findMany({
+      where: { userId },
+      skip,
+      take: itemsPerPage,
+      orderBy: { date: 'desc' },
+    }),
+    prisma.expense.count({ where: { userId } }),
+  ]);
 
   return {
-    data: expenses.slice(startIndex, endIndex),
-    total: expenses.length,
+    data: expenses.map(formatExpense),
+    total,
   };
 }
 
@@ -40,15 +77,24 @@ export async function addExpense(
     throw new ValidationError(validationResult);
   }
 
-  const newId = Math.max(...expenses.map((e) => e.id), 0) + 1;
-  const newExpense: Expense = {
-    ...expenseData,
-    id: newId,
-    amount: parseFloat(expenseData.amount.toString()),
-  };
+  const userId = await getCurrentUserId();
 
-  expenses = [newExpense, ...expenses];
-  return newExpense;
+  if (!userId) {
+    throw new Error('You must be logged in to add an expense');
+  }
+
+  const newExpense = await prisma.expense.create({
+    data: {
+      date: new Date(expenseData.date),
+      description: expenseData.description,
+      amount: parseFloat(expenseData.amount.toString()),
+      category: normalizeCategory(expenseData.category),
+      merchant: expenseData.merchant,
+      userId,
+    },
+  });
+
+  return formatExpense(newExpense);
 }
 
 export async function updateExpense(
@@ -65,18 +111,42 @@ export async function updateExpense(
     throw new ValidationError(updateValidation);
   }
 
-  const index = expenses.findIndex((e) => e.id === id);
-  if (index === -1) {
+  const userId = await getCurrentUserId();
+
+  if (!userId) {
+    throw new Error('You must be logged in to update an expense');
+  }
+
+  const existingExpense = await prisma.expense.findFirst({
+    where: {
+      id,
+      userId, // Ensure the expense belongs to the current user
+    },
+  });
+
+  if (!existingExpense) {
     return null;
   }
 
-  const updatedExpense = {
-    ...expenses[index],
-    ...expenseData,
-  };
+  // Normalize category if it exists
+  const categoryUpdate = expenseData.category
+    ? { category: normalizeCategory(expenseData.category) }
+    : {};
 
-  expenses[index] = updatedExpense;
-  return updatedExpense;
+  const updatedExpense = await prisma.expense.update({
+    where: { id },
+    data: {
+      ...(expenseData.description && { description: expenseData.description }),
+      ...(expenseData.date && { date: new Date(expenseData.date) }),
+      ...(expenseData.amount && {
+        amount: parseFloat(expenseData.amount.toString()),
+      }),
+      ...categoryUpdate,
+      ...(expenseData.merchant && { merchant: expenseData.merchant }),
+    },
+  });
+
+  return formatExpense(updatedExpense);
 }
 
 export async function deleteExpense(id: number): Promise<boolean> {
@@ -85,9 +155,32 @@ export async function deleteExpense(id: number): Promise<boolean> {
     throw new ValidationError(idValidation);
   }
 
-  const initialLength = expenses.length;
-  expenses = expenses.filter((e) => e.id !== id);
-  return expenses.length < initialLength;
+  const userId = await getCurrentUserId();
+
+  if (!userId) {
+    throw new Error('You must be logged in to delete an expense');
+  }
+
+  // First check if the expense exists and belongs to the current user
+  const existingExpense = await prisma.expense.findFirst({
+    where: {
+      id,
+      userId, // Ensure the expense belongs to the current user
+    },
+  });
+
+  if (!existingExpense) {
+    return false;
+  }
+
+  try {
+    await prisma.expense.delete({
+      where: { id },
+    });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function getExpenseById(id: number): Promise<Expense | null> {
@@ -96,8 +189,20 @@ export async function getExpenseById(id: number): Promise<Expense | null> {
     throw new ValidationError(idValidation);
   }
 
-  const expense = expenses.find((e) => e.id === id);
-  return expense || null;
+  const userId = await getCurrentUserId();
+
+  if (!userId) {
+    return null;
+  }
+
+  const expense = await prisma.expense.findFirst({
+    where: {
+      id,
+      userId, // Ensure the expense belongs to the current user
+    },
+  });
+
+  return expense ? formatExpense(expense) : null;
 }
 
 export async function searchExpenses(query: string): Promise<Expense[]> {
@@ -105,13 +210,25 @@ export async function searchExpenses(query: string): Promise<Expense[]> {
     throw new Error('Search query cannot be empty');
   }
 
-  const lowerCaseQuery = query.toLowerCase();
-  return expenses.filter(
-    (e) =>
-      e.merchant.toLowerCase().includes(lowerCaseQuery) ||
-      e.description.toLowerCase().includes(lowerCaseQuery) ||
-      e.category.toLowerCase().includes(lowerCaseQuery),
-  );
+  const userId = await getCurrentUserId();
+
+  if (!userId) {
+    return [];
+  }
+
+  const expenses = await prisma.expense.findMany({
+    where: {
+      userId, // Only search the current user's expenses
+      OR: [
+        { description: { contains: query, mode: 'insensitive' } },
+        { category: { contains: query, mode: 'insensitive' } },
+        { merchant: { contains: query, mode: 'insensitive' } },
+      ],
+    },
+    orderBy: { date: 'desc' },
+  });
+
+  return expenses.map(formatExpense);
 }
 
 export async function sortExpensesByDate(
@@ -129,11 +246,19 @@ export async function sortExpensesByAmount(
 }
 
 export async function getHighestSpendingCategory(
-  expensesToAnalyze: Expense[] = expenses,
+  expensesToAnalyze?: Expense[],
 ): Promise<string | null> {
-  if (expensesToAnalyze.length === 0) return null;
+  let expenses: Expense[];
 
-  const categoryTotals = expensesToAnalyze.reduce<Record<string, number>>(
+  if (expensesToAnalyze) {
+    expenses = expensesToAnalyze;
+  } else {
+    expenses = await getAllExpenses();
+  }
+
+  if (expenses.length === 0) return null;
+
+  const categoryTotals = expenses.reduce<Record<string, number>>(
     (totals, expense) => {
       const { category, amount } = expense;
       totals[category] = (totals[category] || 0) + amount;
@@ -156,11 +281,19 @@ export async function getHighestSpendingCategory(
 }
 
 export async function getLowestSpendingCategory(
-  expensesToAnalyze: Expense[] = expenses,
+  expensesToAnalyze?: Expense[],
 ): Promise<string | null> {
-  if (expensesToAnalyze.length === 0) return null;
+  let expenses: Expense[];
 
-  const categoryTotals = expensesToAnalyze.reduce<Record<string, number>>(
+  if (expensesToAnalyze) {
+    expenses = expensesToAnalyze;
+  } else {
+    expenses = await getAllExpenses();
+  }
+
+  if (expenses.length === 0) return null;
+
+  const categoryTotals = expenses.reduce<Record<string, number>>(
     (totals, expense) => {
       const { category, amount } = expense;
       totals[category] = (totals[category] || 0) + amount;
@@ -180,4 +313,26 @@ export async function getLowestSpendingCategory(
   });
 
   return lowestCategory;
+}
+
+// Helper function to format expense from Prisma to match app model
+function formatExpense(expense: {
+  id: number;
+  date: Date;
+  description: string;
+  amount: number;
+  category: string;
+  merchant: string;
+  userId: number;
+  createdAt: Date;
+  updatedAt: Date;
+}): Expense {
+  return {
+    id: expense.id,
+    date: expense.date.toISOString().split('T')[0], // Format as YYYY-MM-DD
+    description: expense.description,
+    amount: expense.amount,
+    category: expense.category,
+    merchant: expense.merchant,
+  };
 }

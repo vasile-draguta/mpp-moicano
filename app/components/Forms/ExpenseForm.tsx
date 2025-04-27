@@ -33,15 +33,15 @@ const defaultFormData: ExpenseFormData = {
 };
 
 const categories = [
-  'Food & Dining',
-  'Shopping',
-  'Housing',
+  'Food',
   'Transportation',
+  'Housing',
+  'Utilities',
   'Entertainment',
-  'Health & Fitness',
-  'Travel',
+  'Healthcare',
+  'Shopping',
   'Education',
-  'Gifts & Donations',
+  'Travel',
   'Other',
 ];
 
