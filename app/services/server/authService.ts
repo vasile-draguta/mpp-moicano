@@ -154,17 +154,24 @@ export const getCurrentUser = async (): Promise<User | null> => {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      createdAt: true,
+    },
   });
 
   if (!user) {
     return null;
   }
 
-  // Return user without password
+  // Return user with needed fields
   return {
     id: user.id,
     email: user.email,
     name: user.name,
+    createdAt: user.createdAt.toISOString(),
   };
 };
 
