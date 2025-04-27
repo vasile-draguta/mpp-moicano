@@ -11,13 +11,31 @@ const apiRequest = async <T>(
   url: string,
   options?: RequestInit,
 ): Promise<T> => {
-  const response = await fetch(url, options);
+  try {
+    console.log(`Fetching from: ${url}`);
+    const response = await fetch(url, {
+      ...options,
+      // Add cache control headers to prevent caching issues
+      headers: {
+        ...options?.headers,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        Pragma: 'no-cache',
+        Expires: '0',
+      },
+    });
 
-  if (!response.ok) {
-    throw new Error(`API request failed: ${response.statusText}`);
+    if (!response.ok) {
+      console.error(`API error: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `API request failed: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Fetch error:', error);
+    throw error;
   }
-
-  return response.json();
 };
 
 export const getAllExpenses = async (sortBy?: string): Promise<Expense[]> => {

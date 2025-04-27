@@ -66,45 +66,61 @@ const SpendingByCategoryChart = () => {
 
   useEffect(() => {
     const updateChartData = async () => {
-      const expenses = await getAllExpenses();
+      try {
+        const expenses = await getAllExpenses();
 
-      const categoryTotals = expenses.reduce<Record<string, number>>(
-        (acc, expense) => {
-          acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
-          return acc;
-        },
-        {},
-      );
-
-      const sortedCategories = Object.entries(categoryTotals)
-        .sort(([, a], [, b]) => b - a)
-        .reduce(
-          (acc, [key, value]) => {
-            acc[key] = value;
+        const categoryTotals = expenses.reduce<Record<string, number>>(
+          (acc, expense) => {
+            acc[expense.category] =
+              (acc[expense.category] || 0) + expense.amount;
             return acc;
           },
-          {} as Record<string, number>,
+          {},
         );
 
-      setChartData({
-        labels: Object.keys(sortedCategories),
-        datasets: [
-          {
-            data: Object.values(sortedCategories),
-            backgroundColor: [
-              '#BF415D', // Red
-              '#A78BFA', // Purple
-              '#60A5FA', // Blue
-              '#34D399', // Green
-              '#FBBF24', // Yellow
-              '#F87171', // Light Red
-              '#818CF8', // Indigo
-              '#4ADE80', // Light Green
-            ],
-            borderWidth: 0,
-          },
-        ],
-      });
+        const sortedCategories = Object.entries(categoryTotals)
+          .sort(([, a], [, b]) => b - a)
+          .reduce(
+            (acc, [key, value]) => {
+              acc[key] = value;
+              return acc;
+            },
+            {} as Record<string, number>,
+          );
+
+        setChartData({
+          labels: Object.keys(sortedCategories),
+          datasets: [
+            {
+              data: Object.values(sortedCategories),
+              backgroundColor: [
+                '#BF415D', // Red
+                '#A78BFA', // Purple
+                '#60A5FA', // Blue
+                '#34D399', // Green
+                '#FBBF24', // Yellow
+                '#F87171', // Light Red
+                '#818CF8', // Indigo
+                '#4ADE80', // Light Green
+              ],
+              borderWidth: 0,
+            },
+          ],
+        });
+      } catch (error) {
+        console.error('Failed to update chart data:', error);
+        // Set default empty chart data on error
+        setChartData({
+          labels: ['No Data Available'],
+          datasets: [
+            {
+              data: [1],
+              backgroundColor: ['#374151'], // Gray
+              borderWidth: 0,
+            },
+          ],
+        });
+      }
     };
 
     updateChartData();
