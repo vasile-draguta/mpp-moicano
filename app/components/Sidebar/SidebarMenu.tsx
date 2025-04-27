@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, CreditCard, User, ReceiptText } from 'lucide-react';
+import { Home, CreditCard, User } from 'lucide-react';
 
 const menuItems = [
   { name: 'Home', href: '/', icon: <Home className="w-6 h-6" /> },
@@ -11,11 +11,7 @@ const menuItems = [
     href: '/expenses',
     icon: <CreditCard className="w-6 h-6" />,
   },
-  {
-    name: 'Receipts',
-    href: '/receipts',
-    icon: <ReceiptText className="w-6 h-6" />,
-  },
+
   { name: 'Account', href: '/account', icon: <User className="w-6 h-6" /> },
 ];
 

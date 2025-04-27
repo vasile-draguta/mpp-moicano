@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Sidebar from '@/app/components/Sidebar/Sidebar';
 import ContentScreen from '@/app/components/ContentScreen/ContentScreen';
 import ExpenseForm from '@/app/components/Forms/ExpenseForm';
-import { getExpenseById } from '@/app/services/expenseService';
+import { getExpenseById } from '@/app/services/client/expenseService';
 import { Expense } from '@/app/types/Expense';
 
 export default function EditExpense() {
@@ -16,27 +16,31 @@ export default function EditExpense() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const expenseId = Number(params.id);
+    const fetchExpense = async () => {
+      const expenseId = Number(params.id);
 
-    if (isNaN(expenseId)) {
-      setError('Invalid expense ID');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const expenseData = getExpenseById(expenseId);
-      if (expenseData) {
-        setExpense(expenseData);
-      } else {
-        setError('Expense not found');
+      if (isNaN(expenseId)) {
+        setError('Invalid expense ID');
+        setLoading(false);
+        return;
       }
-    } catch (err) {
-      setError('Failed to load expense data');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+
+      try {
+        const expenseData = await getExpenseById(expenseId);
+        if (expenseData) {
+          setExpense(expenseData);
+        } else {
+          setError('Expense not found');
+        }
+      } catch (err) {
+        setError('Failed to load expense data');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExpense();
   }, [params.id]);
 
   return (

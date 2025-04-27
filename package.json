@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "test": "bun test --preload ./tests/setup.ts"
-  },
+  "dev": "next dev --turbo",
+  "build": "next build",
+  "start": "next start",
+  "lint": "next lint",
+  "test": "bun test --preload ./tests/setup.ts"
+},
   "dependencies": {
     "@prisma/client": "^6.4.1",
     "@prisma/extension-accelerate": "^1.2.2",

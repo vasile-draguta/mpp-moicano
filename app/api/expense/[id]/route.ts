@@ -6,15 +6,16 @@ import {
   getExpenseById,
 } from '@/app/services/server/expenseService';
 import { ValidationError } from '@/app/utils/errors/ValidationError';
+import { NextRequest } from 'next/server';
 
 // Get a specific expense by ID
 export async function GET(
-  req: Request,
-  { params }: { params: { id: string } },
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const id = Number(params.id);
-    const expense = await getExpenseById(id);
+    const { id } = await params;
+    const expense = await getExpenseById(Number(id));
 
     if (!expense) {
       return Response.json({ error: 'Expense not found' }, { status: 404 });
@@ -34,14 +35,14 @@ export async function GET(
 
 // Update an expense
 export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } },
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const id = Number(params.id);
+    const { id } = await params;
     const expenseData = await req.json();
 
-    const updatedExpense = await updateExpense(id, expenseData);
+    const updatedExpense = await updateExpense(Number(id), expenseData);
 
     if (!updatedExpense) {
       return Response.json({ error: 'Expense not found' }, { status: 404 });
@@ -64,12 +65,12 @@ export async function PATCH(
 
 // Delete an expense
 export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } },
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const id = Number(params.id);
-    const deleted = await deleteExpense(id);
+    const { id } = await params;
+    const deleted = await deleteExpense(Number(id));
 
     if (!deleted) {
       return Response.json({ error: 'Expense not found' }, { status: 404 });
