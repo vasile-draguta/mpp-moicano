@@ -99,16 +99,23 @@ const SpendingByMonthChart = () => {
   useEffect(() => {
     const updateChartData = async () => {
       try {
+        console.log('Monthly chart: Fetching expenses');
         const expenses = await getAllExpenses();
+        console.log('Monthly chart: Fetched expenses', expenses.length);
 
         const monthTotals = expenses.reduce<Record<string, number>>(
           (acc, expense) => {
-            const date = new Date(expense.date);
-            const monthYear = date.toLocaleString('default', {
-              month: 'short',
-              year: 'numeric',
-            });
-            acc[monthYear] = (acc[monthYear] || 0) + expense.amount;
+            try {
+              const date = new Date(expense.date);
+              const monthYear = date.toLocaleString('default', {
+                month: 'short',
+                year: 'numeric',
+              });
+              acc[monthYear] = (acc[monthYear] || 0) + expense.amount;
+            } catch (err) {
+              console.error('Error processing expense date:', err, expense);
+              // Skip this expense if we can't process it
+            }
             return acc;
           },
           {},

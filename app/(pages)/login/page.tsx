@@ -22,6 +22,7 @@ export default function LoginPage() {
       router.push('/'); // Redirect to home page after successful login
       router.refresh(); // Refresh to update auth state
     } catch (err: unknown) {
+      console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'Failed to login');
     } finally {
       setIsLoading(false);
@@ -34,6 +35,10 @@ export default function LoginPage() {
         <h1 className="text-2xl font-bold text-center text-gray-300 mb-6">
           Login to Expense Tracker
         </h1>
+
+        <div className="bg-purple-500/10 border border-purple-500 text-purple-300 px-4 py-3 rounded mb-4">
+          Default credentials have been pre-filled from the seed script
+        </div>
 
         {error && (
           <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded mb-4">

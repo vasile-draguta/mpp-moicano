@@ -10,17 +10,8 @@ import {
 import { ValidationError } from '@/app/utils/errors/ValidationError';
 import { getCurrentUserId } from './authService';
 
-// Map old category names to new ones for backwards compatibility
-const CATEGORY_MAPPING: Record<string, string> = {
-  'Food & Dining': 'Food',
-  'Health & Fitness': 'Healthcare',
-  'Gifts & Donations': 'Other',
-};
-
-// Helper to normalize categories
-const normalizeCategory = (category: string): string => {
-  return CATEGORY_MAPPING[category] || category;
-};
+// Example of how to handle legacy category names can be implemented with the utility
+// function getCategoryIdFromName from expenseValidator.ts
 
 export async function getAllExpenses(): Promise<Expense[]> {
   const userId = await getCurrentUserId();
@@ -32,6 +23,7 @@ export async function getAllExpenses(): Promise<Expense[]> {
   const expenses = await prisma.expense.findMany({
     where: { userId },
     orderBy: { date: 'desc' },
+    include: { category: true },
   });
 
   return expenses.map(formatExpense);
@@ -59,6 +51,7 @@ export async function getPaginatedExpenses(
       skip,
       take: itemsPerPage,
       orderBy: { date: 'desc' },
+      include: { category: true },
     }),
     prisma.expense.count({ where: { userId } }),
   ]);
@@ -88,10 +81,11 @@ export async function addExpense(
       date: new Date(expenseData.date),
       description: expenseData.description,
       amount: parseFloat(expenseData.amount.toString()),
-      category: normalizeCategory(expenseData.category),
+      categoryId: expenseData.categoryId,
       merchant: expenseData.merchant,
       userId,
     },
+    include: { category: true },
   });
 
   return formatExpense(newExpense);
@@ -128,11 +122,6 @@ export async function updateExpense(
     return null;
   }
 
-  // Normalize category if it exists
-  const categoryUpdate = expenseData.category
-    ? { category: normalizeCategory(expenseData.category) }
-    : {};
-
   const updatedExpense = await prisma.expense.update({
     where: { id },
     data: {
@@ -141,9 +130,10 @@ export async function updateExpense(
       ...(expenseData.amount && {
         amount: parseFloat(expenseData.amount.toString()),
       }),
-      ...categoryUpdate,
+      ...(expenseData.categoryId && { categoryId: expenseData.categoryId }),
       ...(expenseData.merchant && { merchant: expenseData.merchant }),
     },
+    include: { category: true },
   });
 
   return formatExpense(updatedExpense);
@@ -200,32 +190,40 @@ export async function getExpenseById(id: number): Promise<Expense | null> {
       id,
       userId, // Ensure the expense belongs to the current user
     },
+    include: { category: true },
   });
 
-  return expense ? formatExpense(expense) : null;
+  if (!expense) {
+    return null;
+  }
+
+  return formatExpense(expense);
 }
 
 export async function searchExpenses(query: string): Promise<Expense[]> {
-  if (!query || query.trim() === '') {
-    throw new Error('Search query cannot be empty');
-  }
-
   const userId = await getCurrentUserId();
 
   if (!userId) {
     return [];
   }
 
+  const searchString = query.toLowerCase();
+
   const expenses = await prisma.expense.findMany({
     where: {
-      userId, // Only search the current user's expenses
+      userId,
       OR: [
-        { description: { contains: query, mode: 'insensitive' } },
-        { category: { contains: query, mode: 'insensitive' } },
-        { merchant: { contains: query, mode: 'insensitive' } },
+        { description: { contains: searchString, mode: 'insensitive' } },
+        { merchant: { contains: searchString, mode: 'insensitive' } },
+        {
+          category: {
+            name: { contains: searchString, mode: 'insensitive' },
+          },
+        },
       ],
     },
     orderBy: { date: 'desc' },
+    include: { category: true },
   });
 
   return expenses.map(formatExpense);
@@ -234,20 +232,20 @@ export async function searchExpenses(query: string): Promise<Expense[]> {
 export async function sortExpensesByDate(
   expenses: Expense[],
 ): Promise<Expense[]> {
-  return [...expenses].sort((a, b) => {
-    return new Date(b.date).getTime() - new Date(a.date).getTime();
-  });
+  return [...expenses].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  );
 }
 
 export async function sortExpensesByAmount(
   expenses: Expense[],
 ): Promise<Expense[]> {
-  return [...expenses].sort((a, b) => a.amount - b.amount);
+  return [...expenses].sort((a, b) => b.amount - a.amount);
 }
 
 export async function getHighestSpendingCategory(
   expensesToAnalyze?: Expense[],
-): Promise<string | null> {
+): Promise<number | null> {
   let expenses: Expense[];
 
   if (expensesToAnalyze) {
@@ -258,22 +256,23 @@ export async function getHighestSpendingCategory(
 
   if (expenses.length === 0) return null;
 
-  const categoryTotals = expenses.reduce<Record<string, number>>(
+  const categoryTotals = expenses.reduce<Record<number, number>>(
     (totals, expense) => {
-      const { category, amount } = expense;
-      totals[category] = (totals[category] || 0) + amount;
+      const { categoryId, amount } = expense;
+      totals[categoryId] = (totals[categoryId] || 0) + amount;
       return totals;
     },
     {},
   );
 
-  let highestCategory: string | null = null;
+  let highestCategory: number | null = null;
   let highestAmount = 0;
 
-  Object.entries(categoryTotals).forEach(([category, total]) => {
+  Object.entries(categoryTotals).forEach(([categoryIdStr, total]) => {
+    const categoryId = parseInt(categoryIdStr, 10);
     if (total > highestAmount) {
       highestAmount = total;
-      highestCategory = category;
+      highestCategory = categoryId;
     }
   });
 
@@ -282,7 +281,7 @@ export async function getHighestSpendingCategory(
 
 export async function getLowestSpendingCategory(
   expensesToAnalyze?: Expense[],
-): Promise<string | null> {
+): Promise<number | null> {
   let expenses: Expense[];
 
   if (expensesToAnalyze) {
@@ -293,35 +292,36 @@ export async function getLowestSpendingCategory(
 
   if (expenses.length === 0) return null;
 
-  const categoryTotals = expenses.reduce<Record<string, number>>(
+  const categoryTotals = expenses.reduce<Record<number, number>>(
     (totals, expense) => {
-      const { category, amount } = expense;
-      totals[category] = (totals[category] || 0) + amount;
+      const { categoryId, amount } = expense;
+      totals[categoryId] = (totals[categoryId] || 0) + amount;
       return totals;
     },
     {},
   );
 
-  let lowestCategory: string | null = null;
+  let lowestCategory: number | null = null;
   let lowestAmount = Infinity;
 
-  Object.entries(categoryTotals).forEach(([category, total]) => {
+  Object.entries(categoryTotals).forEach(([categoryIdStr, total]) => {
+    const categoryId = parseInt(categoryIdStr, 10);
     if (total < lowestAmount) {
       lowestAmount = total;
-      lowestCategory = category;
+      lowestCategory = categoryId;
     }
   });
 
   return lowestCategory;
 }
 
-// Helper function to format expense from Prisma to match app model
 function formatExpense(expense: {
   id: number;
   date: Date;
   description: string;
   amount: number;
-  category: string;
+  categoryId: number;
+  category?: { id: number; name: string };
   merchant: string;
   userId: number;
   createdAt: Date;
@@ -329,10 +329,16 @@ function formatExpense(expense: {
 }): Expense {
   return {
     id: expense.id,
-    date: expense.date.toISOString().split('T')[0], // Format as YYYY-MM-DD
+    date: expense.date.toISOString().split('T')[0],
     description: expense.description,
     amount: expense.amount,
-    category: expense.category,
+    categoryId: expense.categoryId,
+    category: expense.category
+      ? {
+          id: expense.category.id,
+          name: expense.category.name,
+        }
+      : undefined,
     merchant: expense.merchant,
   };
 }

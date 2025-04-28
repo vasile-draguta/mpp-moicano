@@ -68,11 +68,18 @@ const SpendingByCategoryChart = () => {
     const updateChartData = async () => {
       try {
         const expenses = await getAllExpenses();
+        console.log('Category chart: Fetched expenses:', expenses);
 
         const categoryTotals = expenses.reduce<Record<string, number>>(
           (acc, expense) => {
-            acc[expense.category] =
-              (acc[expense.category] || 0) + expense.amount;
+            try {
+              const categoryName = expense.category?.name || 'Unknown';
+              acc[categoryName] = (acc[categoryName] || 0) + expense.amount;
+            } catch (err) {
+              console.error('Error processing expense category:', err, expense);
+              // Use 'Unknown' category for any problematic expenses
+              acc['Unknown'] = (acc['Unknown'] || 0) + expense.amount;
+            }
             return acc;
           },
           {},

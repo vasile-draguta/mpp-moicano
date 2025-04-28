@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import {
@@ -8,6 +8,7 @@ import {
   updateExpense,
 } from '@/app/services/client/expenseService';
 import { Expense } from '@/app/types/Expense';
+import { getAllCategories } from '@/app/services/client/categoryService';
 
 const expenseSchema = z.object({
   date: z.string().min(1, { message: 'Date is required' }),
@@ -19,31 +20,24 @@ const expenseSchema = z.object({
     .refine((val: string) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
       message: 'Amount must be a positive number',
     }),
-  category: z.string().min(1, { message: 'Category is required' }),
+  categoryId: z.number().min(1, { message: 'Category is required' }),
 });
 
-type ExpenseFormData = z.infer<typeof expenseSchema>;
+type ExpenseFormData = {
+  date: string;
+  merchant: string;
+  description: string;
+  amount: string;
+  categoryId: number;
+};
 
 const defaultFormData: ExpenseFormData = {
   date: new Date().toISOString().split('T')[0],
   merchant: '',
   description: '',
   amount: '',
-  category: '',
+  categoryId: 0,
 };
-
-const categories = [
-  'Food',
-  'Transportation',
-  'Housing',
-  'Utilities',
-  'Entertainment',
-  'Healthcare',
-  'Shopping',
-  'Education',
-  'Travel',
-  'Other',
-];
 
 interface ExpenseFormProps {
   expenseToEdit?: Expense | null;
@@ -51,51 +45,73 @@ interface ExpenseFormProps {
 
 export default function ExpenseForm({ expenseToEdit }: ExpenseFormProps) {
   const router = useRouter();
-  const isEditing = !!expenseToEdit;
+  const [formData, setFormData] = useState<ExpenseFormData>(defaultFormData);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>(
+    [],
+  );
 
-  const initialFormData: ExpenseFormData = isEditing
-    ? {
+  useEffect(() => {
+    // Load categories
+    const loadCategories = async () => {
+      try {
+        const categoriesData = await getAllCategories();
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      }
+    };
+
+    loadCategories();
+  }, []);
+
+  useEffect(() => {
+    if (expenseToEdit) {
+      setFormData({
         date: expenseToEdit.date,
         merchant: expenseToEdit.merchant,
         description: expenseToEdit.description,
         amount: expenseToEdit.amount.toString(),
-        category: expenseToEdit.category,
-      }
-    : defaultFormData;
-
-  const [formData, setFormData] = useState<ExpenseFormData>(initialFormData);
-  const [errors, setErrors] = useState<
-    Partial<Record<keyof ExpenseFormData, string>>
-  >({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+        categoryId: expenseToEdit.categoryId,
+      });
+    }
+  }, [expenseToEdit]);
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
-    setFormData((prev: typeof formData) => ({ ...prev, [name]: value }));
-    if (errors[name as keyof ExpenseFormData]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
-    }
-    if (formError) {
-      setFormError(null);
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === 'categoryId' ? parseInt(value, 10) : value,
+    }));
+
+    // Clear the error for this field when user types
+    if (errors[name]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
     }
   };
 
-  const validateForm = (): boolean => {
+  const validate = (): boolean => {
     try {
-      expenseSchema.parse(formData);
+      expenseSchema.parse({
+        ...formData,
+        amount: formData.amount,
+      });
       setErrors({});
       return true;
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const newErrors: Partial<Record<keyof ExpenseFormData, string>> = {};
-        error.errors.forEach((err) => {
-          const path = err.path[0] as keyof ExpenseFormData;
-          newErrors[path] = err.message;
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        const newErrors: Record<string, string> = {};
+        err.errors.forEach((error) => {
+          const path = error.path[0].toString();
+          newErrors[path] = error.message;
         });
         setErrors(newErrors);
       }
@@ -105,51 +121,49 @@ export default function ExpenseForm({ expenseToEdit }: ExpenseFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setFormError(null);
 
-    if (!validateForm()) {
-      setIsSubmitting(false);
-      return;
-    }
+    if (!validate()) return;
+
+    setIsSubmitting(true);
 
     try {
-      const expenseData = {
-        date: formData.date,
-        merchant: formData.merchant,
-        description: formData.description,
-        amount: parseFloat(formData.amount),
-        category: formData.category,
-      };
-
-      if (isEditing && expenseToEdit) {
-        const updatedExpense = updateExpense(expenseToEdit.id, expenseData);
-        console.log('Expense updated:', updatedExpense);
+      if (expenseToEdit) {
+        // Update existing expense
+        await updateExpense(expenseToEdit.id, {
+          ...formData,
+          amount: parseFloat(formData.amount),
+        });
       } else {
-        const newExpense = addExpense(expenseData);
-        console.log('New expense added:', newExpense);
+        // Add new expense
+        await addExpense({
+          ...formData,
+          amount: parseFloat(formData.amount),
+        });
       }
 
       router.push('/expenses');
+      router.refresh();
     } catch (error) {
-      console.error('Failed to save expense:', error);
-      setFormError(
-        'An error occurred while saving the expense. Please try again.',
-      );
+      console.error('Error saving expense:', error);
+      if (error instanceof Error) {
+        setErrors({ form: error.message });
+      } else {
+        setErrors({ form: 'An unexpected error occurred' });
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl mx-auto mt-50">
-      {formError && (
-        <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded">
-          {formError}
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {errors.form && (
+        <div className="p-4 bg-red-500/20 border border-red-500 rounded-md">
+          <p className="text-red-500">{errors.form}</p>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>
           <label
             htmlFor="date"
@@ -183,7 +197,7 @@ export default function ExpenseForm({ expenseToEdit }: ExpenseFormProps) {
             type="text"
             id="merchant"
             name="merchant"
-            placeholder="Enter merchant name"
+            placeholder="Merchant name"
             value={formData.merchant}
             onChange={handleChange}
             className={`w-full px-3 py-2 bg-[#1E1E1E] border ${
@@ -192,6 +206,29 @@ export default function ExpenseForm({ expenseToEdit }: ExpenseFormProps) {
           />
           {errors.merchant && (
             <p className="mt-1 text-sm text-red-500">{errors.merchant}</p>
+          )}
+        </div>
+
+        <div className="sm:col-span-2">
+          <label
+            htmlFor="description"
+            className="block text-sm font-medium text-gray-300 mb-1"
+          >
+            Description
+          </label>
+          <input
+            type="text"
+            id="description"
+            name="description"
+            placeholder="Expense description"
+            value={formData.description}
+            onChange={handleChange}
+            className={`w-full px-3 py-2 bg-[#1E1E1E] border ${
+              errors.description ? 'border-red-500' : 'border-purple-300/20'
+            } rounded-md text-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-300/50`}
+          />
+          {errors.description && (
+            <p className="mt-1 text-sm text-red-500">{errors.description}</p>
           )}
         </div>
 
@@ -220,74 +257,51 @@ export default function ExpenseForm({ expenseToEdit }: ExpenseFormProps) {
 
         <div>
           <label
-            htmlFor="category"
+            htmlFor="categoryId"
             className="block text-sm font-medium text-gray-300 mb-1"
           >
             Category
           </label>
           <select
-            id="category"
-            name="category"
-            value={formData.category}
+            id="categoryId"
+            name="categoryId"
+            value={formData.categoryId}
             onChange={handleChange}
             className={`w-full px-3 py-2 bg-[#1E1E1E] border ${
-              errors.category ? 'border-red-500' : 'border-purple-300/20'
+              errors.categoryId ? 'border-red-500' : 'border-purple-300/20'
             } rounded-md text-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-300/50`}
           >
-            <option value="">Select a category</option>
+            <option value={0}>Select a category</option>
             {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
+              <option key={category.id} value={category.id}>
+                {category.name}
               </option>
             ))}
           </select>
-          {errors.category && (
-            <p className="mt-1 text-sm text-red-500">{errors.category}</p>
+          {errors.categoryId && (
+            <p className="mt-1 text-sm text-red-500">{errors.categoryId}</p>
           )}
         </div>
       </div>
 
-      <div>
-        <label
-          htmlFor="description"
-          className="block text-sm font-medium text-gray-300 mb-1"
-        >
-          Description
-        </label>
-        <textarea
-          id="description"
-          name="description"
-          rows={3}
-          placeholder="Enter a description"
-          value={formData.description}
-          onChange={handleChange}
-          className={`w-full px-3 py-2 bg-[#1E1E1E] border ${
-            errors.description ? 'border-red-500' : 'border-purple-300/20'
-          } rounded-md text-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-300/50`}
-        />
-        {errors.description && (
-          <p className="mt-1 text-sm text-red-500">{errors.description}</p>
-        )}
-      </div>
-
-      <div className="flex justify-end space-x-3 pt-4">
+      <div className="flex justify-end gap-4">
         <button
           type="button"
-          onClick={() => router.push('/expenses')}
-          className="px-4 py-2 bg-[#1E1E1E] text-gray-300 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600"
+          onClick={() => router.back()}
+          className="px-5 py-2 bg-[#1E1E1E] text-gray-300 rounded-md hover:bg-purple-300/10 focus:outline-none focus:ring-2 focus:ring-purple-300/50"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-4 py-2 bg-purple-300/10 text-purple-300 rounded-md hover:bg-purple-300/20 focus:outline-none focus:ring-2 focus:ring-purple-300/50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-5 py-2 bg-purple-300/20 text-purple-300 rounded-md hover:bg-purple-300/30 focus:outline-none focus:ring-2 focus:ring-purple-300/50 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting
             ? 'Saving...'
-            : isEditing
+            : expenseToEdit
               ? 'Update Expense'
-              : 'Save Expense'}
+              : 'Add Expense'}
         </button>
       </div>
     </form>

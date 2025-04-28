@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/app/components/Sidebar/Sidebar';
 import ContentScreen from '@/app/components/ContentScreen/ContentScreen';
@@ -14,14 +14,29 @@ import { useAuth } from './contexts/AuthContext';
 export default function Home() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('Home component mounted');
+    console.log('Auth state:', { user, loading });
+
     if (!loading && !user) {
+      console.log('No user, redirecting to login');
       router.push('/login');
     }
+
+    // Add an error handler to catch unhandled errors
+    const handleError = (event: ErrorEvent) => {
+      console.error('Unhandled error:', event.error);
+      setError(event.error?.message || 'An unknown error occurred');
+    };
+
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
   }, [user, loading, router]);
 
   if (loading) {
+    console.log('Showing loading spinner');
     return (
       <div className="flex items-center justify-center h-screen bg-[#121212]">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
@@ -30,8 +45,38 @@ export default function Home() {
   }
 
   if (!user) {
-    return null; // Let the useEffect redirect handle this
+    console.log('No user, showing login button');
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#121212] flex-col">
+        <h1 className="text-2xl font-bold text-gray-300 mb-6">
+          Welcome to Expense Tracker
+        </h1>
+        <p className="text-gray-400 mb-8">
+          Please log in to access your dashboard
+        </p>
+        <button
+          onClick={() => router.push('/login')}
+          className="px-6 py-3 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+        >
+          Go to Login
+        </button>
+      </div>
+    );
   }
+
+  // Display any errors that occurred
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#121212] flex-col">
+        <div className="text-red-500 font-bold text-xl mb-4">Error!</div>
+        <div className="text-white bg-red-500/20 p-4 rounded-md max-w-md">
+          {error}
+        </div>
+      </div>
+    );
+  }
+
+  console.log('Rendering full dashboard');
 
   return (
     <div className="flex h-screen">

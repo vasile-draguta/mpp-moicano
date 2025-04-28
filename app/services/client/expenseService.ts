@@ -6,6 +6,7 @@ import {
   validateExpenseUpdate,
   validateExpenseId,
 } from '@/app/utils/validators/expenseValidator';
+import { getCategoryById } from './categoryService';
 
 const apiRequest = async <T>(
   url: string,
@@ -159,26 +160,58 @@ export const getHighestSpendingCategory = async (
   if (expensesToAnalyze) {
     if (expensesToAnalyze.length === 0) return null;
 
-    const categoryTotals = expensesToAnalyze.reduce<Record<string, number>>(
-      (totals, expense) => {
-        const { category, amount } = expense;
-        totals[category] = (totals[category] || 0) + amount;
-        return totals;
-      },
-      {},
-    );
+    // Create a map to store category totals and track category IDs
+    const categoryTotals: Record<
+      number,
+      { total: number; name: string | null }
+    > = {};
 
-    let highestCategory: string | null = null;
+    // First pass: calculate totals by categoryId and collect names
+    for (const expense of expensesToAnalyze) {
+      const categoryId = expense.categoryId;
+      const categoryName = expense.category?.name || null;
+
+      if (!categoryTotals[categoryId]) {
+        categoryTotals[categoryId] = { total: 0, name: categoryName };
+      }
+
+      categoryTotals[categoryId].total += expense.amount;
+
+      // Update name if we have it and it wasn't set before
+      if (categoryName && !categoryTotals[categoryId].name) {
+        categoryTotals[categoryId].name = categoryName;
+      }
+    }
+
+    let highestCategoryId: number | null = null;
     let highestAmount = 0;
 
-    Object.entries(categoryTotals).forEach(([category, total]) => {
-      if (total > highestAmount) {
-        highestAmount = total;
-        highestCategory = category;
+    // Find highest amount
+    Object.entries(categoryTotals).forEach(([categoryIdStr, data]) => {
+      if (data.total > highestAmount) {
+        highestAmount = data.total;
+        highestCategoryId = parseInt(categoryIdStr, 10);
       }
     });
 
-    return highestCategory;
+    // Return the name of the highest category
+    if (highestCategoryId !== null) {
+      // If we already have the name, return it
+      if (categoryTotals[highestCategoryId].name) {
+        return categoryTotals[highestCategoryId].name;
+      }
+
+      // Otherwise fetch it
+      try {
+        const category = await getCategoryById(highestCategoryId);
+        return category?.name || null;
+      } catch (error) {
+        console.error('Error fetching category name:', error);
+        return null;
+      }
+    }
+
+    return null;
   }
 
   const expenses = await getAllExpenses();
@@ -191,26 +224,58 @@ export const getLowestSpendingCategory = async (
   if (expensesToAnalyze) {
     if (expensesToAnalyze.length === 0) return null;
 
-    const categoryTotals = expensesToAnalyze.reduce<Record<string, number>>(
-      (totals, expense) => {
-        const { category, amount } = expense;
-        totals[category] = (totals[category] || 0) + amount;
-        return totals;
-      },
-      {},
-    );
+    // Create a map to store category totals and track category IDs
+    const categoryTotals: Record<
+      number,
+      { total: number; name: string | null }
+    > = {};
 
-    let lowestCategory: string | null = null;
+    // First pass: calculate totals by categoryId and collect names
+    for (const expense of expensesToAnalyze) {
+      const categoryId = expense.categoryId;
+      const categoryName = expense.category?.name || null;
+
+      if (!categoryTotals[categoryId]) {
+        categoryTotals[categoryId] = { total: 0, name: categoryName };
+      }
+
+      categoryTotals[categoryId].total += expense.amount;
+
+      // Update name if we have it and it wasn't set before
+      if (categoryName && !categoryTotals[categoryId].name) {
+        categoryTotals[categoryId].name = categoryName;
+      }
+    }
+
+    let lowestCategoryId: number | null = null;
     let lowestAmount = Infinity;
 
-    Object.entries(categoryTotals).forEach(([category, total]) => {
-      if (total < lowestAmount) {
-        lowestAmount = total;
-        lowestCategory = category;
+    // Find lowest amount
+    Object.entries(categoryTotals).forEach(([categoryIdStr, data]) => {
+      if (data.total < lowestAmount) {
+        lowestAmount = data.total;
+        lowestCategoryId = parseInt(categoryIdStr, 10);
       }
     });
 
-    return lowestCategory;
+    // Return the name of the lowest category
+    if (lowestCategoryId !== null) {
+      // If we already have the name, return it
+      if (categoryTotals[lowestCategoryId].name) {
+        return categoryTotals[lowestCategoryId].name;
+      }
+
+      // Otherwise fetch it
+      try {
+        const category = await getCategoryById(lowestCategoryId);
+        return category?.name || null;
+      } catch (error) {
+        console.error('Error fetching category name:', error);
+        return null;
+      }
+    }
+
+    return null;
   }
 
   const expenses = await getAllExpenses();

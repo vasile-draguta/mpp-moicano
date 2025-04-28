@@ -23,12 +23,21 @@ model User {
   expenses  Expense[]
 }
 
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  expenses  Expense[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
 model Expense {
   id          Int      @id @default(autoincrement())
   date        DateTime
   description String
   amount      Float
-  category    String
+  categoryId  Int
+  category    Category @relation(fields: [categoryId], references: [id])
   merchant    String
   userId      Int
   user        User     @relation(fields: [userId], references: [id])
@@ -36,4 +45,5 @@ model Expense {
   updatedAt   DateTime @updatedAt
 
   @@index([userId])
+  @@index([categoryId])
 }

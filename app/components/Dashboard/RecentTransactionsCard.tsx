@@ -36,9 +36,14 @@ const RecentTransactionsCard = () => {
               <p className="font-medium text-gray-200 text-sm">
                 {expense.description}
               </p>
-              <p className="text-xs text-gray-400">
-                {new Date(expense.date).toLocaleDateString()}
-              </p>
+              <div className="flex items-center space-x-2">
+                <p className="text-xs text-gray-400">
+                  {new Date(expense.date).toLocaleDateString()}
+                </p>
+                <span className="text-xs px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded">
+                  {expense.category?.name || 'Unknown'}
+                </span>
+              </div>
             </div>
             <span className="text-[#BF415D] font-bold">
               {formatter.format(expense.amount)}

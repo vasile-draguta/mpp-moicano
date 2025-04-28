@@ -137,14 +137,14 @@ const ExpensesTableContent = ({
                   </td>
                   <td
                     className={`px-5 py-4 ${
-                      expense.category === highestSpendingCategory
+                      expense.category?.name === highestSpendingCategory
                         ? 'text-[#BF415D] font-bold'
-                        : expense.category === lowestSpendingCategory
+                        : expense.category?.name === lowestSpendingCategory
                           ? 'text-purple-300 font-bold'
                           : 'text-gray-300'
                     }`}
                   >
-                    {expense.category}
+                    {expense.category?.name || 'Unknown'}
                   </td>
                   <td className="px-5 py-4 text-right">
                     <div className="flex items-center justify-end space-x-2">

@@ -10,30 +10,43 @@ export type ValidationResult = {
   errors: ValidationError[];
 };
 
-const VALID_CATEGORIES = [
-  'Food',
-  'Transportation',
-  'Housing',
-  'Utilities',
-  'Entertainment',
-  'Healthcare',
-  'Shopping',
-  'Education',
-  'Travel',
-  'Other',
-];
+const VALID_CATEGORY_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-// Map old category names to new ones for backwards compatibility
-const CATEGORY_MAPPING: Record<string, string> = {
-  'Food & Dining': 'Food',
-  'Health & Fitness': 'Healthcare',
-  'Gifts & Donations': 'Other',
+// Map of category IDs to names for validation messages
+const CATEGORY_ID_TO_NAME: Record<number, string> = {
+  1: 'Food',
+  2: 'Transportation',
+  3: 'Housing',
+  4: 'Utilities',
+  5: 'Entertainment',
+  6: 'Healthcare',
+  7: 'Shopping',
+  8: 'Education',
+  9: 'Travel',
+  10: 'Other',
 };
 
-// Helper to normalize categories
-const normalizeCategory = (category: string): string => {
-  return CATEGORY_MAPPING[category] || category;
+// Map of category names to IDs for backwards compatibility
+const CATEGORY_NAME_TO_ID: Record<string, number> = {
+  Food: 1,
+  Transportation: 2,
+  Housing: 3,
+  Utilities: 4,
+  Entertainment: 5,
+  Healthcare: 6,
+  Shopping: 7,
+  Education: 8,
+  Travel: 9,
+  Other: 10,
+  'Food & Dining': 1,
+  'Health & Fitness': 6,
+  'Gifts & Donations': 10,
 };
+
+// Helper function to get category ID from name
+export function getCategoryIdFromName(name: string): number | undefined {
+  return CATEGORY_NAME_TO_ID[name];
+}
 
 export const validateNewExpense = (
   expense: Omit<Expense, 'id'>,
@@ -58,16 +71,13 @@ export const validateNewExpense = (
     });
   }
 
-  if (!expense.category) {
-    errors.push({ field: 'category', message: 'Category is required' });
-  } else {
-    const normalizedCategory = normalizeCategory(expense.category);
-    if (!VALID_CATEGORIES.includes(normalizedCategory)) {
-      errors.push({
-        field: 'category',
-        message: `Category must be one of: ${VALID_CATEGORIES.join(', ')}`,
-      });
-    }
+  if (!expense.categoryId) {
+    errors.push({ field: 'categoryId', message: 'Category is required' });
+  } else if (!VALID_CATEGORY_IDS.includes(expense.categoryId)) {
+    errors.push({
+      field: 'categoryId',
+      message: `Category must be one of: ${Object.values(CATEGORY_ID_TO_NAME).join(', ')}`,
+    });
   }
 
   if (!expense.date) {
@@ -144,17 +154,12 @@ export const validateExpenseUpdate = (
     }
   }
 
-  if (expenseUpdate.category !== undefined) {
-    if (expenseUpdate.category.trim() === '') {
-      errors.push({ field: 'category', message: 'Category cannot be empty' });
-    } else {
-      const normalizedCategory = normalizeCategory(expenseUpdate.category);
-      if (!VALID_CATEGORIES.includes(normalizedCategory)) {
-        errors.push({
-          field: 'category',
-          message: `Category must be one of: ${VALID_CATEGORIES.join(', ')}`,
-        });
-      }
+  if (expenseUpdate.categoryId !== undefined) {
+    if (!VALID_CATEGORY_IDS.includes(expenseUpdate.categoryId)) {
+      errors.push({
+        field: 'categoryId',
+        message: `Category must be one of: ${Object.values(CATEGORY_ID_TO_NAME).join(', ')}`,
+      });
     }
   }
 

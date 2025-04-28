@@ -15,7 +15,34 @@ const normalizeCategory = (category: string): string => {
   return CATEGORY_MAPPING[category] || category;
 };
 
+// List of all categories
+const CATEGORIES = [
+  'Food',
+  'Transportation',
+  'Housing',
+  'Utilities',
+  'Entertainment',
+  'Healthcare',
+  'Shopping',
+  'Education',
+  'Travel',
+  'Other',
+];
+
 async function main() {
+  // Create categories
+  for (const categoryName of CATEGORIES) {
+    await prisma.category.upsert({
+      where: { name: categoryName },
+      update: {},
+      create: {
+        name: categoryName,
+      },
+    });
+  }
+
+  console.log(`Created ${CATEGORIES.length} categories`);
+
   // Create a default user
   const user = await prisma.user.upsert({
     where: { email: 'user@example.com' },
@@ -31,12 +58,24 @@ async function main() {
 
   // Add the mock expenses linked to the user
   for (const expense of mockExpenses) {
+    const normalizedCategory = normalizeCategory(expense.category);
+
+    // Find the category
+    const category = await prisma.category.findUnique({
+      where: { name: normalizedCategory },
+    });
+
+    if (!category) {
+      console.error(`Category not found: ${normalizedCategory}`);
+      continue;
+    }
+
     await prisma.expense.create({
       data: {
         date: new Date(expense.date),
         description: expense.description,
         amount: expense.amount,
-        category: normalizeCategory(expense.category),
+        categoryId: category.id,
         merchant: expense.merchant,
         userId: user.id,
       },
