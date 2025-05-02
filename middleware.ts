@@ -9,6 +9,9 @@ export async function middleware(request: NextRequest) {
   // Define public paths that don't require authentication
   const isPublicPath = path === '/login' || path === '/register';
 
+  // Define admin paths that require admin role
+  const isAdminPath = path.startsWith('/admin');
+
   // Get the authentication token from the cookies
   const token = request.cookies.get('auth_token')?.value || '';
 
@@ -31,6 +34,25 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
+  // Check admin routes
+  if (isAdminPath && token) {
+    try {
+      // Verify the token and check role
+      const { payload } = await jwtVerify(
+        token,
+        new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-key'),
+      );
+
+      // If not admin, redirect to home
+      if (payload.role !== 'ADMIN') {
+        return NextResponse.redirect(new URL('/', request.url));
+      }
+    } catch (error) {
+      console.log(error);
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+  }
+
   return NextResponse.next();
 }
 
@@ -43,5 +65,6 @@ export const config = {
     '/expenses', // Expenses list page
     '/expenses/new', // New expense page
     '/expenses/edit/:path*', // Edit expense pages
+    '/admin/:path*', // Admin pages
   ],
 };

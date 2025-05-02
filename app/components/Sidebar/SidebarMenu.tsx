@@ -2,14 +2,17 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Receipt, User, LogOut } from 'lucide-react';
+import { Home, Receipt, User, LogOut, Shield } from 'lucide-react';
+import { User as UserType } from '@/app/types/User';
 
 type SidebarMenuProps = {
   onLogout: () => void;
+  user: UserType | null;
 };
 
-export default function SidebarMenu({ onLogout }: SidebarMenuProps) {
+export default function SidebarMenu({ onLogout, user }: SidebarMenuProps) {
   const pathname = usePathname();
+  const isAdmin = user?.role === 'ADMIN';
 
   const menuItems = [
     { name: 'Dashboard', href: '/', icon: <Home size={20} /> },
@@ -20,6 +23,15 @@ export default function SidebarMenu({ onLogout }: SidebarMenuProps) {
     },
     { name: 'Account', href: '/account', icon: <User size={20} /> },
   ];
+
+  // Admin-only menu item
+  if (isAdmin) {
+    menuItems.push({
+      name: 'Admin Dashboard',
+      href: '/admin',
+      icon: <Shield size={20} />,
+    });
+  }
 
   const isActive = (path: string) => {
     return pathname === path || pathname?.startsWith(`${path}/`);

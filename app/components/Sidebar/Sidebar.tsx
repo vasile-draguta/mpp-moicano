@@ -14,7 +14,7 @@ export default function Sidebar() {
         </h1>
       </div>
 
-      <SidebarMenu onLogout={logout} />
+      <SidebarMenu onLogout={logout} user={user} />
 
       <div className="p-4 border-t border-purple-300/10">
         <div className="overflow-hidden">

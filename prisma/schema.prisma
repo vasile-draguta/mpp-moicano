@@ -13,14 +13,31 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Define user roles enum
+enum UserRole {
+  ADMIN
+  USER
+}
+
+// Define log action types
+enum LogActionType {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+}
+
 model User {
-  id        Int       @id @default(autoincrement())
-  email     String    @unique
-  name      String?
-  password  String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  expenses  Expense[]
+  id          Int       @id @default(autoincrement())
+  email       String    @unique
+  name        String?
+  password    String
+  role        UserRole  @default(USER)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  expenses    Expense[]
+  logs        Log[] // One-to-many relationship with logs
+  isMonitored Boolean   @default(false) // Flag for monitored users
 }
 
 model Category {
@@ -46,4 +63,22 @@ model Expense {
 
   @@index([userId])
   @@index([categoryId])
+}
+
+// Model to track user actions and potential suspicious activity
+model Log {
+  id         Int           @id @default(autoincrement())
+  userId     Int
+  user       User          @relation(fields: [userId], references: [id])
+  actionType LogActionType
+  entityType String // The type of entity affected (e.g., "Expense", "User")
+  entityId   Int? // The ID of the affected entity (nullable for read operations on lists)
+  ipAddress  String? // IP address of the user
+  userAgent  String? // User agent (browser/device info)
+  details    String? // Additional details about the action
+  timestamp  DateTime      @default(now())
+
+  @@index([userId])
+  @@index([actionType])
+  @@index([timestamp])
 }

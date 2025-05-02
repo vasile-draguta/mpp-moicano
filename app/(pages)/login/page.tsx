@@ -4,9 +4,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { login } from '@/app/services/client/authService';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { refreshUser } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -18,9 +20,17 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      // Login the user
       await login(email, password);
-      router.push('/'); // Redirect to home page after successful login
-      router.refresh(); // Refresh to update auth state
+
+      // Refresh auth context to get the updated user data
+      await refreshUser();
+
+      // Navigate to dashboard after auth is refreshed
+      setTimeout(() => {
+        router.push('/');
+        router.refresh();
+      }, 100);
     } catch (err: unknown) {
       console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'Failed to login');

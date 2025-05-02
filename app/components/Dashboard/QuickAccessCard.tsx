@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Plus, Search, Activity } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 
 const QuickAccessCard = () => {
   return (
@@ -19,12 +19,6 @@ const QuickAccessCard = () => {
           className="flex items-center bg-purple-300/10 hover:bg-purple-300/20 text-purple-300 px-3 py-2 rounded text-sm"
         >
           <Search size={16} className="mr-2" /> Search Expenses
-        </Link>
-        <Link
-          href="/realtime"
-          className="flex items-center bg-purple-300/10 hover:bg-purple-300/20 text-purple-300 px-3 py-2 rounded text-sm"
-        >
-          <Activity size={16} className="mr-2" /> Real-Time Expenses
         </Link>
       </div>
     </div>

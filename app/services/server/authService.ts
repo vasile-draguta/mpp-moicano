@@ -25,8 +25,10 @@ const registerSchema = z.object({
 });
 
 // Helper for setting JWT cookie
-const setAuthCookie = async (userId: number) => {
-  const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+const setAuthCookie = async (userId: number, role: string) => {
+  const token = jwt.sign({ userId, role }, JWT_SECRET, {
+    expiresIn: JWT_EXPIRES_IN,
+  });
 
   const cookieStore = await cookies();
   cookieStore.set('auth_token', token, {
@@ -43,23 +45,35 @@ const removeAuthCookie = async () => {
   cookieStore.delete('auth_token');
 };
 
-// Helper for getting current user ID from token
-export const getCurrentUserId = async (): Promise<number | null> => {
+// Helper for getting current user ID and role from token
+export const getCurrentUserIdAndRole = async (): Promise<{
+  userId: number | null;
+  role: string | null;
+}> => {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth_token')?.value;
 
   if (!token) {
-    return null;
+    return { userId: null, role: null };
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: number };
-    return decoded.userId;
+    const decoded = jwt.verify(token, JWT_SECRET) as {
+      userId: number;
+      role: string;
+    };
+    return { userId: decoded.userId, role: decoded.role };
   } catch {
     // Token is invalid or expired
     await removeAuthCookie();
-    return null;
+    return { userId: null, role: null };
   }
+};
+
+// Helper for getting current user ID from token
+export const getCurrentUserId = async (): Promise<number | null> => {
+  const { userId } = await getCurrentUserIdAndRole();
+  return userId;
 };
 
 // Register a new user
@@ -128,14 +142,15 @@ export const loginUser = async (
     throw new Error('Invalid email or password');
   }
 
-  // Set the JWT cookie
-  await setAuthCookie(user.id);
+  // Set the JWT cookie with user role
+  await setAuthCookie(user.id, user.role);
 
   // Return user without password
   return {
     id: user.id,
     email: user.email,
     name: user.name,
+    role: user.role,
   };
 };
 
@@ -144,8 +159,8 @@ export const logoutUser = async (): Promise<void> => {
   await removeAuthCookie();
 };
 
-// Get the current user
-export const getCurrentUser = async (): Promise<User | null> => {
+// Get the currently logged in user
+export const getCurrentUser = async () => {
   const userId = await getCurrentUserId();
 
   if (!userId) {
@@ -154,24 +169,18 @@ export const getCurrentUser = async (): Promise<User | null> => {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      createdAt: true,
-    },
   });
 
   if (!user) {
     return null;
   }
 
-  // Return user with needed fields
+  // Return user without password
   return {
     id: user.id,
     email: user.email,
     name: user.name,
-    createdAt: user.createdAt.toISOString(),
+    role: user.role,
   };
 };
 
@@ -181,6 +190,22 @@ export const requireAuth = async () => {
 
   if (!user) {
     redirect('/login');
+  }
+
+  return user;
+};
+
+// Middleware to protect admin routes
+export const requireAdmin = async () => {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    redirect('/login');
+  }
+
+  if (user.role !== 'ADMIN') {
+    // Redirect to home page if not an admin
+    redirect('/');
   }
 
   return user;
