@@ -38,6 +38,9 @@ model User {
   expenses    Expense[]
   logs        Log[] // One-to-many relationship with logs
   isMonitored Boolean   @default(false) // Flag for monitored users
+
+  // Add index on isMonitored to speed up queries for monitored users
+  @@index([isMonitored])
 }
 
 model Category {
@@ -61,8 +64,14 @@ model Expense {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // Existing indexes
   @@index([userId])
   @@index([categoryId])
+  // New optimized indexes for statistical queries
+  @@index([date])
+  @@index([userId, date]) // Compound index for user's expenses by date
+  @@index([userId, categoryId]) // Compound index for user's expenses by category
+  @@index([userId, amount]) // Compound index for queries that filter by amount
 }
 
 // Model to track user actions and potential suspicious activity
@@ -78,7 +87,11 @@ model Log {
   details    String? // Additional details about the action
   timestamp  DateTime      @default(now())
 
+  // Existing indexes
   @@index([userId])
   @@index([actionType])
   @@index([timestamp])
+  // New indexes for monitoring and analysis
+  @@index([userId, timestamp]) // Compound index for user activity over time
+  @@index([userId, actionType, timestamp]) // Compound index for specific action types by user
 }

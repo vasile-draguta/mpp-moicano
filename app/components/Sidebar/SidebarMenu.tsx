@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Receipt, User, LogOut, Shield } from 'lucide-react';
+import { Home, Receipt, User, LogOut, Shield, BarChart } from 'lucide-react';
 import { User as UserType } from '@/app/types/User';
 
 type SidebarMenuProps = {
@@ -20,6 +20,11 @@ export default function SidebarMenu({ onLogout, user }: SidebarMenuProps) {
       name: 'Expenses',
       href: '/expenses',
       icon: <Receipt size={20} />,
+    },
+    {
+      name: 'Statistics',
+      href: '/statistics',
+      icon: <BarChart size={20} />,
     },
     { name: 'Account', href: '/account', icon: <User size={20} /> },
   ];
