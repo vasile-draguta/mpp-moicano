@@ -14,11 +14,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const user = await loginUser(email, password);
+    const { user, requiresTwoFactor } = await loginUser(email, password);
 
     return NextResponse.json({
-      message: 'Login successful',
+      message: requiresTwoFactor
+        ? 'Two-factor authentication required'
+        : 'Login successful',
       user,
+      requiresTwoFactor,
     });
   } catch (error) {
     const errorMessage =

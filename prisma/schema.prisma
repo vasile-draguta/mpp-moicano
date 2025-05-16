@@ -28,19 +28,41 @@ enum LogActionType {
 }
 
 model User {
-  id          Int       @id @default(autoincrement())
-  email       String    @unique
+  id          Int           @id @default(autoincrement())
+  email       String        @unique
   name        String?
   password    String
-  role        UserRole  @default(USER)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  role        UserRole      @default(USER)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
   expenses    Expense[]
   logs        Log[] // One-to-many relationship with logs
-  isMonitored Boolean   @default(false) // Flag for monitored users
+  isMonitored Boolean       @default(false) // Flag for monitored users
+  sessions    UserSession[] // One-to-many relationship with sessions
+
+  // 2FA fields
+  twoFactorSecret  String? // Secret key for TOTP
+  twoFactorEnabled Boolean @default(false)
+  backupCodes      String? // JSON string containing hashed backup codes
 
   // Add index on isMonitored to speed up queries for monitored users
   @@index([isMonitored])
+}
+
+// Model for tracking user sessions
+model UserSession {
+  id         String   @id @default(uuid())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id])
+  userAgent  String
+  lastActive DateTime @default(now())
+  createdAt  DateTime @default(now())
+  tokenId    String? // Make tokenId optional initially, will update existing sessions first
+
+  // No unique constraint anymore to allow multiple sessions per browser
+  @@index([userId])
+  @@index([lastActive])
+  @@index([tokenId]) // Add index on tokenId
 }
 
 model Category {

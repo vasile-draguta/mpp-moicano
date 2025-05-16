@@ -4,4 +4,5 @@ export interface User {
   name: string | null;
   createdAt?: string;
   role?: string;
+  twoFactorEnabled?: boolean;
 }
