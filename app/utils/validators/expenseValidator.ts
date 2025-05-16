@@ -10,9 +10,12 @@ export type ValidationResult = {
   errors: ValidationError[];
 };
 
+// Keep these constants for backwards compatibility with existing code
+// that might reference them, even though validation no longer enforces them
+/* eslint-disable @typescript-eslint/no-unused-vars */
 const VALID_CATEGORY_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-// Map of category IDs to names for validation messages
+// Map of category IDs to names kept for reference and documentation
 const CATEGORY_ID_TO_NAME: Record<number, string> = {
   1: 'Food',
   2: 'Transportation',
@@ -25,6 +28,7 @@ const CATEGORY_ID_TO_NAME: Record<number, string> = {
   9: 'Travel',
   10: 'Other',
 };
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 // Map of category names to IDs for backwards compatibility
 const CATEGORY_NAME_TO_ID: Record<string, number> = {
@@ -73,10 +77,10 @@ export const validateNewExpense = (
 
   if (!expense.categoryId) {
     errors.push({ field: 'categoryId', message: 'Category is required' });
-  } else if (!VALID_CATEGORY_IDS.includes(expense.categoryId)) {
+  } else if (!Number.isInteger(expense.categoryId) || expense.categoryId <= 0) {
     errors.push({
       field: 'categoryId',
-      message: `Category must be one of: ${Object.values(CATEGORY_ID_TO_NAME).join(', ')}`,
+      message: 'Category ID must be a positive integer',
     });
   }
 
@@ -155,10 +159,13 @@ export const validateExpenseUpdate = (
   }
 
   if (expenseUpdate.categoryId !== undefined) {
-    if (!VALID_CATEGORY_IDS.includes(expenseUpdate.categoryId)) {
+    if (
+      !Number.isInteger(expenseUpdate.categoryId) ||
+      expenseUpdate.categoryId <= 0
+    ) {
       errors.push({
         field: 'categoryId',
-        message: `Category must be one of: ${Object.values(CATEGORY_ID_TO_NAME).join(', ')}`,
+        message: 'Category ID must be a positive integer',
       });
     }
   }

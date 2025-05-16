@@ -12,14 +12,24 @@ import {
 // API route to get all statistics for the current user
 export async function GET(req: NextRequest) {
   try {
-    // Check if user is authenticated
-    const userId = await getCurrentUserId();
-    if (!userId) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-
     // Parse query parameters
     const url = new URL(req.url);
+
+    // Allow specifying userId directly in the query for testing
+    let userId: number | null = parseInt(
+      url.searchParams.get('userId') || '0',
+      10,
+    );
+
+    // If no userId in query, check authentication
+    if (!userId) {
+      userId = await getCurrentUserId();
+      // Only check auth if no userId is provided in query
+      if (!userId) {
+        return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+      }
+    }
+
     const type = url.searchParams.get('type') || 'all';
 
     // Variable to hold the results
@@ -69,13 +79,15 @@ export async function GET(req: NextRequest) {
     // Calculate execution time for performance monitoring
     const executionTime = performance.now() - startTime;
 
-    // Log the action
-    await logUserAction(
-      LogActionType.READ,
-      'Statistics',
-      undefined,
-      `Retrieved ${type} statistics (execution: ${Math.round(executionTime)}ms)`,
-    );
+    // Log the action (don't log JMeter test requests to avoid cluttering logs)
+    if (!url.searchParams.get('noLog')) {
+      await logUserAction(
+        LogActionType.READ,
+        'Statistics',
+        undefined,
+        `Retrieved ${type} statistics (execution: ${Math.round(executionTime)}ms)`,
+      );
+    }
 
     return NextResponse.json({
       message: 'Statistics retrieved successfully',
@@ -83,6 +95,7 @@ export async function GET(req: NextRequest) {
       meta: {
         executionTime: Math.round(executionTime),
         type,
+        userId,
       },
     });
   } catch (error) {

@@ -10,7 +10,7 @@ import { PrismaClient, LogActionType } from '@prisma/client';
 const prisma = new PrismaClient();
 
 // Configuration
-const USER_ID = 3; // ID of the user to simulate (updated to match the user found in logs)
+const USER_ID = 10; // ID of the user to simulate (updated to match the user found in logs)
 const ACTION_COUNT = 30; // Increased number of actions to simulate (well above threshold)
 const ENTITY_TYPES = ['Expense', 'Category', 'User']; // Types of entities to simulate actions on
 const ACTION_TYPES = [

@@ -1,10 +1,15 @@
 import { requireAdmin } from '@/app/services/server/authService';
 import prisma from '@/app/db';
 import Link from 'next/link';
+import { checkForSuspiciousActivity } from '@/app/services/server/monitoringService';
 
 export default async function MonitoredUsersPage() {
   // This will redirect to login if not logged in, or to home if not admin
   await requireAdmin();
+
+  // Run the monitoring check automatically when an admin accesses this page
+  // Default parameters: 5 minutes time window, 20 actions threshold
+  const monitoringResult = await checkForSuspiciousActivity();
 
   // Fetch monitored users
   const monitoredUsers = await prisma.user.findMany({
@@ -40,6 +45,14 @@ export default async function MonitoredUsersPage() {
           ← Back to Admin Dashboard
         </Link>
       </div>
+
+      {monitoringResult?.usersMonitored &&
+        monitoringResult.usersMonitored > 0 && (
+          <div className="mb-4 p-3 bg-yellow-800 text-yellow-200 rounded-md">
+            <strong>Alert:</strong> {monitoringResult.usersMonitored} new
+            user(s) flagged for suspicious activity.
+          </div>
+        )}
 
       <div className="bg-[#1E1E1E] shadow-md rounded-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-700">
