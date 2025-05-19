@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import Sidebar from '@/app/components/Sidebar/Sidebar';
 import ContentScreen from '@/app/components/ContentScreen/ContentScreen';
 import { useAuth } from '@/app/contexts/AuthContext';
@@ -26,7 +27,7 @@ export default function TwoFactorPage() {
   const isTwoFactorEnabled = user?.twoFactorEnabled || false;
 
   // Load 2FA setup
-  const loadTwoFactorSetup = async () => {
+  const loadTwoFactorSetup = useCallback(async () => {
     if (isTwoFactorEnabled) return;
 
     setIsLoading(true);
@@ -42,14 +43,14 @@ export default function TwoFactorPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isTwoFactorEnabled]);
 
   // Effect to load 2FA setup when page loads
   useEffect(() => {
     if (!isTwoFactorEnabled) {
       loadTwoFactorSetup();
     }
-  }, [isTwoFactorEnabled]);
+  }, [isTwoFactorEnabled, loadTwoFactorSetup]);
 
   // Enable 2FA
   const handleEnableTwoFactor = async (e: React.FormEvent) => {
@@ -181,7 +182,15 @@ export default function TwoFactorPage() {
                 1. Scan the QR code with your authenticator app
               </h3>
               <div className="bg-white inline-block p-2 rounded mb-4">
-                <img src={qrCodeUrl} alt="QR Code" className="w-48 h-48" />
+                {qrCodeUrl && (
+                  <Image
+                    src={qrCodeUrl}
+                    alt="QR Code"
+                    width={192}
+                    height={192}
+                    unoptimized
+                  />
+                )}
               </div>
 
               <h3 className="text-lg font-medium text-gray-300 mb-2">

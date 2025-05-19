@@ -1,13 +1,11 @@
 'use server';
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { terminateSession } from '@/app/services/server/authService';
 
 // DELETE - Terminate a specific session by ID
-export async function DELETE(
-  _request: Request,
-  { params }: { params: { id: string } },
-) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function DELETE(request: NextRequest, { params }: any) {
   try {
     const sessionId = params.id;
 

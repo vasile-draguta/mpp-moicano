@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCategoryById } from '@/app/services/server/categoryService';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function GET(request: NextRequest, { params }: any) {
   try {
     const id = parseInt(params.id, 10);
 

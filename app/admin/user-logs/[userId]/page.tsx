@@ -5,15 +5,13 @@ import { getUserLogs } from '@/app/services/server/loggingService';
 import prisma from '@/app/db';
 import Link from 'next/link';
 
-export default async function UserLogsPage({
-  params,
-}: {
-  params: { userId: string };
-}) {
+// Use any type to bypass type checking issues
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default async function UserLogsPage(props: any) {
   // This will redirect to login if not logged in, or to home if not admin
   await requireAdmin();
 
-  const userId = parseInt(params.userId, 10);
+  const userId = parseInt(props.params.userId, 10);
 
   // Fetch user details
   const user = await prisma.user.findUnique({

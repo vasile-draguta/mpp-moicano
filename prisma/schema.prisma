@@ -60,7 +60,8 @@ model UserSession {
   createdAt  DateTime @default(now())
   tokenId    String? // Make tokenId optional initially, will update existing sessions first
 
-  // No unique constraint anymore to allow multiple sessions per browser
+  // Add unique constraint for userId + userAgent
+  @@unique([userId, userAgent], name: "userId_userAgent")
   @@index([userId])
   @@index([lastActive])
   @@index([tokenId]) // Add index on tokenId
