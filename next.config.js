@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  distDir: 'dist',
+  // Let Next.js use its default directory
   images: {
     remotePatterns: [
       {
@@ -15,6 +15,8 @@ const nextConfig = {
     ],
     unoptimized: true,
   },
+  // Ensure output is visible for Vercel
+  output: 'standalone',
 };
 
 module.exports = nextConfig; 
