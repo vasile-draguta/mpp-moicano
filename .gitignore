@@ -43,3 +43,6 @@ next-env.d.ts
 
 # jmeter
 jmeter.log
+
+# Keep these files for Vercel
+!node_modules/.prisma/

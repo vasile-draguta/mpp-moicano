@@ -1,0 +1,6 @@
+.git
+README.md
+node_modules
+!node_modules/.prisma
+!node_modules/@prisma
+.next 
